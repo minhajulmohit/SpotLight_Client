@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
+import Footer from "@/components/shared/Footer";
+import ThemeProvider from "@/providers/ThemeProvider";
 
 const oswald = Oswald({
   variable: "--font-heading",
@@ -21,12 +23,22 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body
-        className={`${oswald.variable} ${inter.variable} h-full antialiased font-sans min-h-full flex flex-col`}
+        className={`${oswald.variable} ${inter.variable} min-h-screen antialiased font-sans flex flex-col`}
       >
-        <Navbar />
+        <ThemeProvider>
+          <Navbar />
 
-        {children}
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );
