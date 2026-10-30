@@ -2,7 +2,20 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.slow-spin {
+  animation: slow-spin 8s linear infinite;
+}
+
+ @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
@@ -48,14 +61,14 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
+    --background: hsl(0 0% 100%);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
+    --primary: hsl(37.7 92.1% 50.2%);
+    --primary-foreground: hsl(24 9.8% 10%);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
@@ -83,14 +96,14 @@
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --background: hsl(240 10% 3.9%);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
+    --card: hsl(240 3.7% 15.9%);
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
+    --popover: hsl(240 3.7% 15.9%);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
+    --primary: hsl(43 96% 56%);
+    --primary-foreground: hsl(24 9.8% 10%);
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -98,7 +111,7 @@
     --accent: oklch(0.269 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
+    --border: hsl(240 3.7% 20%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
     --chart-1: oklch(0.87 0 0);
@@ -126,4 +139,4 @@
   html {
     @apply font-sans;
     }
-}
+} 
