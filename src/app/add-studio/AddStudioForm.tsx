@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, MapPin } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ImageIcon,
+  Loader2,
+  MapPin,
+  Upload,
+} from "lucide-react";
+import { toast } from "sonner";
 
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +40,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/toast";
 
 const STUDIO_API_ENDPOINT = `${
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
@@ -82,20 +91,32 @@ const initialForm: FormState = {
   hostEmail: "",
 };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const urlPattern = /^https?:\/\/.+/i;
 
 const AddStudioForm = () => {
   const router = useRouter();
+  const { data: session, isPending: isAuthPending } = authClient.useSession();
+  const user = session?.user;
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Auto-populate read-only host details from logged-in session
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        hostName: user.name ?? "",
+        hostEmail: user.email ?? "",
+      }));
+    }
+  }, [user]);
 
   const update = <K extends keyof FormState>(key: K, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
@@ -103,6 +124,44 @@ const AddStudioForm = () => {
     setAmenities((prev) =>
       checked ? [...prev, value] : prev.filter((item) => item !== value),
     );
+  };
+
+  // Image upload using ImgBB API
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size should be less than 10MB.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const apiKey =
+      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "c0379965d83626fa323fcf63e9f0298a";
+
+    try {
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data?.data?.url) {
+        update("imageUrl", data.data.url);
+        toast.success("Image uploaded to ImgBB successfully!");
+      } else {
+        throw new Error(data?.error?.message ?? "ImgBB upload failed.");
+      }
+    } catch (error) {
+      toast.error("Could not upload to ImgBB. You can paste an image URL directly.");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const validate = (): FormErrors => {
@@ -144,7 +203,7 @@ const AddStudioForm = () => {
     }
 
     if (!form.imageUrl.trim()) {
-      nextErrors.imageUrl = "Image URL is required.";
+      nextErrors.imageUrl = "Image URL or upload is required.";
     } else if (!urlPattern.test(form.imageUrl.trim())) {
       nextErrors.imageUrl =
         "Enter a valid URL starting with http:// or https://.";
@@ -156,16 +215,6 @@ const AddStudioForm = () => {
       nextErrors.overview = "Overview must be at least 20 characters.";
     }
 
-    if (!form.hostName.trim()) {
-      nextErrors.hostName = "Host name is required.";
-    }
-
-    if (!form.hostEmail.trim()) {
-      nextErrors.hostEmail = "Host email is required.";
-    } else if (!emailPattern.test(form.hostEmail.trim())) {
-      nextErrors.hostEmail = "Enter a valid email address.";
-    }
-
     return nextErrors;
   };
 
@@ -175,11 +224,7 @@ const AddStudioForm = () => {
     const nextErrors = validate();
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
-      toast.add({
-        type: "error",
-        title: "Missing information",
-        description: "Please fix the highlighted fields and try again.",
-      });
+      toast.error("Please fill in all required fields.");
       return;
     }
 
@@ -193,8 +238,9 @@ const AddStudioForm = () => {
       imageUrl: form.imageUrl.trim(),
       amenities,
       overview: form.overview.trim(),
-      hostName: form.hostName.trim(),
-      hostEmail: form.hostEmail.trim(),
+      hostName: form.hostName || user?.name || "SpotLight Host",
+      hostEmail: form.hostEmail || user?.email || "",
+      ownerEmail: form.hostEmail || user?.email || "",
     };
 
     setIsSubmitting(true);
@@ -214,34 +260,57 @@ const AddStudioForm = () => {
         );
       }
 
-      toast.add({
-        type: "success",
-        title: "Studio created",
-        description: "Your studio has been listed successfully.",
-      });
-
+      toast.success("Studio published successfully!");
       router.push("/my-listings");
     } catch (error) {
-      toast.add({
-        type: "error",
-        title: "Could not create studio",
-        description:
-          error instanceof Error ? error.message : "Please try again.",
-      });
+      toast.error(
+        error instanceof Error ? error.message : "Could not create studio.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isAuthPending) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-md py-16 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
+          <AlertCircle className="size-7" />
+        </div>
+        <h2 className="mt-4 font-heading text-2xl font-bold">Sign In Required</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Please log in to your account before hosting a new creative space.
+        </p>
+        <Button
+          nativeButton={false}
+          render={<Link href="/login" />}
+          className="mt-6 w-full"
+        >
+          Go to Login
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-          List Your Studio
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+          Host Your Space
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
+          List Your Creative Studio
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Add the details of your production space so creative professionals can
-          discover and book it.
+          Fill in the specifications of your workspace to share it with filmmakers, photographers, and audio producers.
         </p>
       </div>
 
@@ -249,19 +318,19 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Studio Basics</CardTitle>
           <CardDescription>
-            Give your space a clear name and choose the closest category.
+            Give your space a clear title and assign its primary production category.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <FieldGroup>
             <Field data-invalid={Boolean(errors.title)}>
-              <FieldLabel htmlFor="title">Title</FieldLabel>
+              <FieldLabel htmlFor="title">Studio Title</FieldLabel>
               <Input
                 id="title"
                 name="title"
                 value={form.title}
                 onChange={(event) => update("title", event.target.value)}
-                placeholder="e.g. Downtown Daylight Loft"
+                placeholder="e.g. Brooklyn Daylight Cyc Studio"
                 aria-invalid={Boolean(errors.title)}
                 disabled={isSubmitting}
               />
@@ -300,7 +369,7 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Pricing &amp; Capacity</CardTitle>
           <CardDescription>
-            Set your hourly rate, deposit and how many people the space fits.
+            Set your transparent hourly rate, security deposit, and set capacity.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -352,7 +421,7 @@ const AddStudioForm = () => {
             </div>
 
             <Field data-invalid={Boolean(errors.capacity)}>
-              <FieldLabel htmlFor="capacity">Max Capacity</FieldLabel>
+              <FieldLabel htmlFor="capacity">Max Capacity (Persons)</FieldLabel>
               <Input
                 id="capacity"
                 name="capacity"
@@ -362,12 +431,12 @@ const AddStudioForm = () => {
                 step="1"
                 value={form.capacity}
                 onChange={(event) => update("capacity", event.target.value)}
-                placeholder="12"
+                placeholder="15"
                 aria-invalid={Boolean(errors.capacity)}
                 disabled={isSubmitting}
               />
               <FieldDescription>
-                Maximum number of people allowed on set.
+                Maximum crew and cast allowed on set simultaneously.
               </FieldDescription>
               {errors.capacity && <FieldError>{errors.capacity}</FieldError>}
             </Field>
@@ -377,9 +446,9 @@ const AddStudioForm = () => {
 
       <Card className="mt-6 dark:bg-zinc-900 dark:ring-zinc-800">
         <CardHeader>
-          <CardTitle>Location &amp; Media</CardTitle>
+          <CardTitle>Location &amp; Image Upload</CardTitle>
           <CardDescription>
-            Where is your studio and what does it look like?
+            Provide your address and upload a studio banner via ImgBB or paste a direct image URL.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -394,7 +463,7 @@ const AddStudioForm = () => {
                   className="pl-8"
                   value={form.location}
                   onChange={(event) => update("location", event.target.value)}
-                  placeholder="123 Studio Ave, Brooklyn, NY"
+                  placeholder="452 Studio Blvd, Manhattan, NY"
                   aria-invalid={Boolean(errors.location)}
                   disabled={isSubmitting}
                 />
@@ -402,21 +471,69 @@ const AddStudioForm = () => {
               {errors.location && <FieldError>{errors.location}</FieldError>}
             </Field>
 
+            {/* ImgBB Upload & URL field */}
             <Field data-invalid={Boolean(errors.imageUrl)}>
-              <FieldLabel htmlFor="imageUrl">Image URL</FieldLabel>
-              <Input
-                id="imageUrl"
-                name="imageUrl"
-                type="url"
-                value={form.imageUrl}
-                onChange={(event) => update("imageUrl", event.target.value)}
-                placeholder="https://example.com/studio-banner.jpg"
-                aria-invalid={Boolean(errors.imageUrl)}
-                disabled={isSubmitting}
-              />
-              <FieldDescription>
-                Banner image for your listing (used as the featured photo).
-              </FieldDescription>
+              <FieldLabel htmlFor="imageUrl">Studio Banner Image</FieldLabel>
+
+              {/* Upload to ImgBB widget */}
+              <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-muted/30 p-4 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Upload className="size-4 text-primary" />
+                    <span>Upload via ImgBB</span>
+                  </div>
+                  {isUploadingImage && (
+                    <span className="flex items-center gap-1.5 text-xs text-primary">
+                      <Loader2 className="size-3.5 animate-spin" /> Uploading to ImgBB...
+                    </span>
+                  )}
+                </div>
+
+                <label
+                  htmlFor="imgbb-file-input"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground transition hover:bg-muted dark:border-zinc-800"
+                >
+                  <ImageIcon className="size-4 text-primary" />
+                  Select Image File from Device
+                  <input
+                    id="imgbb-file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploadingImage || isSubmitting}
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
+
+              {/* URL input */}
+              <div className="mt-2">
+                <Input
+                  id="imageUrl"
+                  name="imageUrl"
+                  type="url"
+                  value={form.imageUrl}
+                  onChange={(event) => update("imageUrl", event.target.value)}
+                  placeholder="Or paste image URL (e.g. https://...)"
+                  aria-invalid={Boolean(errors.imageUrl)}
+                  disabled={isSubmitting || isUploadingImage}
+                />
+              </div>
+
+              {/* Preview */}
+              {form.imageUrl && urlPattern.test(form.imageUrl) && (
+                <div className="mt-3 relative h-36 w-full overflow-hidden rounded-lg border border-border dark:border-zinc-800">
+                  <img
+                    src={form.imageUrl}
+                    alt="Studio preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-1 text-[11px] font-medium text-white backdrop-blur">
+                    Image Preview
+                  </span>
+                </div>
+              )}
+
               {errors.imageUrl && <FieldError>{errors.imageUrl}</FieldError>}
             </Field>
           </FieldGroup>
@@ -427,7 +544,7 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Amenities</CardTitle>
           <CardDescription>
-            Select everything your space provides.
+            Select equipment and facilities provided with this studio.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -465,7 +582,7 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Detailed Overview</CardTitle>
           <CardDescription>
-            Describe the workspace, rules and technical specs.
+            Describe the floor layout, lighting setups, ceiling height, and sound isolation.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -474,10 +591,10 @@ const AddStudioForm = () => {
             <Textarea
               id="overview"
               name="overview"
-              rows={6}
+              rows={5}
               value={form.overview}
               onChange={(event) => update("overview", event.target.value)}
-              placeholder="Highlights, house rules, equipment list, load-in access..."
+              placeholder="Highlight studio dimensions, cyclorama dimensions, sound acoustic rating, power capacity..."
               aria-invalid={Boolean(errors.overview)}
               disabled={isSubmitting}
             />
@@ -486,43 +603,37 @@ const AddStudioForm = () => {
         </CardContent>
       </Card>
 
+      {/* Read-only User Email & Name as required by Assignment Document */}
       <Card className="mt-6 dark:bg-zinc-900 dark:ring-zinc-800">
         <CardHeader>
-          <CardTitle>Host Details</CardTitle>
-          <CardDescription>How can guests reach you?</CardDescription>
+          <CardTitle>Host Details (Read-only)</CardTitle>
+          <CardDescription>
+            Automatically linked to your authenticated creator account.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <FieldGroup>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field data-invalid={Boolean(errors.hostName)}>
-                <FieldLabel htmlFor="hostName">Host Name</FieldLabel>
+              <Field>
+                <FieldLabel htmlFor="hostName">Host Name (Read-only)</FieldLabel>
                 <Input
                   id="hostName"
                   name="hostName"
+                  readOnly
                   value={form.hostName}
-                  onChange={(event) => update("hostName", event.target.value)}
-                  placeholder="Your name"
-                  aria-invalid={Boolean(errors.hostName)}
-                  disabled={isSubmitting}
+                  className="bg-muted text-muted-foreground cursor-not-allowed"
                 />
-                {errors.hostName && <FieldError>{errors.hostName}</FieldError>}
               </Field>
 
-              <Field data-invalid={Boolean(errors.hostEmail)}>
-                <FieldLabel htmlFor="hostEmail">Host Email</FieldLabel>
+              <Field>
+                <FieldLabel htmlFor="hostEmail">Host Email (Read-only)</FieldLabel>
                 <Input
                   id="hostEmail"
                   name="hostEmail"
-                  type="email"
+                  readOnly
                   value={form.hostEmail}
-                  onChange={(event) => update("hostEmail", event.target.value)}
-                  placeholder="you@example.com"
-                  aria-invalid={Boolean(errors.hostEmail)}
-                  disabled={isSubmitting}
+                  className="bg-muted text-muted-foreground cursor-not-allowed"
                 />
-                {errors.hostEmail && (
-                  <FieldError>{errors.hostEmail}</FieldError>
-                )}
               </Field>
             </div>
           </FieldGroup>
@@ -539,16 +650,16 @@ const AddStudioForm = () => {
         >
           Cancel
         </Button>
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+        <Button type="submit" size="lg" disabled={isSubmitting || isUploadingImage}>
           {isSubmitting ? (
             <>
-              <Loader2 className="animate-spin" />
-              Saving...
+              <Loader2 className="size-4 animate-spin" />
+              Publishing Studio...
             </>
           ) : (
             <>
               Publish Studio
-              <ArrowRight />
+              <ArrowRight className="size-4" />
             </>
           )}
         </Button>
