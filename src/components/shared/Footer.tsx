@@ -95,14 +95,14 @@ const quickLinks = (
       </Link>
     </li>
     <li>
-      <a href="#how-it-works" className={linkClass}>
+      <Link href="/#how-it-works" className={linkClass}>
         How it Works
-      </a>
+      </Link>
     </li>
     <li>
-      <a href="#about-us" className={linkClass}>
+      <Link href="/#about-us" className={linkClass}>
         About Us
-      </a>
+      </Link>
     </li>
   </>
 );
