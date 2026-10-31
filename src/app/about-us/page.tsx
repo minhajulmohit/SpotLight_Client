@@ -44,16 +44,16 @@ export default function AboutUsPage() {
   return (
     <div className="bg-background pb-20">
       {/* Hero Header */}
-      <section className="border-b border-border bg-zinc-950 py-16 text-white dark:border-zinc-800 sm:py-24">
+      <section className="border-b border-border bg-muted/40 py-16 text-foreground dark:bg-zinc-950 dark:text-white sm:py-24">
         <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
             <Sparkles className="size-3.5" />
             Our Mission &amp; Vision
           </div>
           <h1 className="mt-4 font-heading text-4xl font-bold sm:text-5xl lg:text-6xl">
-            About Spot<span className="text-amber-400">Light</span>
+            About Spot<span className="text-primary">Light</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-300 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground dark:text-zinc-300 sm:text-lg">
             A peer-to-peer marketplace uniting creative filmmakers, photographers,
             musicians, and podcasters with extraordinary production spaces.
           </p>

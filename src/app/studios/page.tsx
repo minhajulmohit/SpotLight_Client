@@ -171,15 +171,15 @@ const StudiosContent = () => {
 
   return (
     <div className="bg-background pb-20">
-      <section className="border-b border-border bg-zinc-950 py-14 text-white dark:border-zinc-800 sm:py-20">
+      <section className="border-b border-border bg-muted/40 py-14 text-foreground dark:bg-zinc-950 dark:text-white sm:py-20">
         <div className="container mx-auto px-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
             Find your creative space
           </p>
           <h1 className="mt-3 font-heading text-4xl font-bold sm:text-5xl">
             Explore studios
           </h1>
-          <p className="mt-4 max-w-2xl text-zinc-300">
+          <p className="mt-4 max-w-2xl text-muted-foreground dark:text-zinc-300">
             Discover production-ready spaces for photography, film, music,
             podcasts, workshops, and events.
           </p>

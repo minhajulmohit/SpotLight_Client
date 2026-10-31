@@ -158,15 +158,15 @@ const MyBookingsPage = () => {
   return (
     <div className="bg-background pb-20">
       {/* Header */}
-      <section className="border-b border-border bg-zinc-950 py-12 text-white dark:border-zinc-800 sm:py-16">
+      <section className="border-b border-border bg-muted/40 py-12 text-foreground dark:bg-zinc-950 dark:text-white sm:py-16">
         <div className="container mx-auto px-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
             Reservation Management
           </p>
           <h1 className="mt-3 font-heading text-3xl font-bold sm:text-4xl">
             My Studio Bookings
           </h1>
-          <p className="mt-2 text-sm text-zinc-300">
+          <p className="mt-2 text-sm text-muted-foreground dark:text-zinc-300">
             Track your reserved studio sessions, inspect timing details, and download receipts.
           </p>
         </div>
