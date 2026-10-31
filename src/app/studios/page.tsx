@@ -9,20 +9,29 @@ import StudioCard, {
 } from "@/components/studios/StudioCard";
 import { Button } from "@/components/ui/button";
 
+const DEFAULT_CATEGORIES = [
+  "Photo Studio",
+  "Sound Stage",
+  "Podcast Lounge",
+  "Music Suite",
+  "Art Workshop",
+];
+
 const toStudioList = (
   data: StudioCardData[] | { studios?: StudioCardData[] },
 ) => (Array.isArray(data) ? data : data.studios ?? []);
 
-const normalizeCategory = (value: string) =>
-  value
-    .trim()
-    .toLowerCase()
+const normalizeCategory = (value: string) => {
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed === "workshop" || trimmed === "workshops") return "art workshop";
+  return trimmed
     .replace(/&/g, "and")
     .replace(/[-_/]/g, " ")
     .replace(/\b(photos?|studios?|rooms?|lounges?|stages?|suites?|workshops?)\b/g, (word) =>
       word,
     )
     .replace(/\s+/g, " ");
+};
 
 const categoriesMatch = (studioCategory: string, selectedCategory: string) => {
   if (!selectedCategory) return true;
@@ -56,6 +65,15 @@ const StudiosContent = () => {
   const [sort, setSort] = useState("recommended");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Sync state when URL search params change (e.g. clicking category link from Home)
+  useEffect(() => {
+    setCategory(searchParams.get("category") ?? "");
+    setSearch(searchParams.get("search") ?? "");
+    setLocation(searchParams.get("location") ?? "");
+    setMaxRate(searchParams.get("maxRate") ?? "");
+    setMinRating(searchParams.get("rating") ?? "");
+  }, [searchParams]);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -85,11 +103,20 @@ const StudiosContent = () => {
     return () => controller.abort();
   }, []);
 
-  const categories = useMemo(
-    () =>
-      [...new Set(studios.map((studio) => studio.category).filter(Boolean))].sort(),
-    [studios],
-  );
+  const categories = useMemo(() => {
+    const sanitized = studios
+      .map((studio) => {
+        const cat = studio.category?.trim();
+        if (!cat) return "";
+        if (cat.toLowerCase() === "workshop" || cat.toLowerCase() === "workshops") {
+          return "Art Workshop";
+        }
+        return cat;
+      })
+      .filter(Boolean);
+
+    return [...new Set([...DEFAULT_CATEGORIES, ...sanitized])].sort();
+  }, [studios]);
 
   const filteredStudios = useMemo(() => {
     const query = search.trim().toLowerCase();

@@ -27,6 +27,10 @@ const StudioCard = ({ studio }: StudioCardProps) => {
   const rating = studio.rating ?? 0;
   const image =
     studio.imageUrl ?? studio.image ?? studio.bannerImage ?? "/studio-placeholder.jpg";
+  const category =
+    studio.category?.trim().toLowerCase() === "workshop"
+      ? "Art Workshop"
+      : studio.category;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
@@ -39,7 +43,7 @@ const StudioCard = ({ studio }: StudioCardProps) => {
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/60 to-transparent" />
         <span className="absolute top-4 left-4 rounded-full bg-background/95 px-3 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
-          {studio.category}
+          {category}
         </span>
         <span className="absolute right-4 bottom-4 flex items-center gap-1 rounded-full bg-zinc-950/85 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <Star className="size-3.5 fill-amber-400 text-amber-400" />
