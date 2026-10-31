@@ -34,7 +34,10 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="border-y border-border bg-zinc-50 py-20 dark:border-zinc-800 dark:bg-zinc-950 sm:py-24">
+    <section
+      id="how-it-works"
+      className="border-y border-border bg-zinc-50 py-20 scroll-mt-16 dark:border-zinc-800 dark:bg-zinc-950 sm:py-24"
+    >
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-500">
