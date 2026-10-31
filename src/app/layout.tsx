@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import ThemeProvider from "@/providers/ThemeProvider";
+import { Toaster } from "@/components/ui/toast";
 
 const oswald = Oswald({
   variable: "--font-heading",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
           <main className="flex-1">{children}</main>
           <Footer />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
