@@ -80,21 +80,32 @@ const MyListingsPage = () => {
     setReloadKey((key) => key + 1);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
 
-    // TODO: backend e DELETE /studios/:id add korle ekhane API call boshabo
     const deletedTitle = deleteTarget.title;
-    setStudios((prev) =>
-      prev.filter((studio) => studio._id !== deleteTarget._id),
-    );
-    setDeleteTarget(null);
+    try {
+      const response = await fetch(`/api/studios/${deleteTarget._id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Studio could not be deleted.");
 
-    toast.add({
-      type: "success",
-      title: "Studio deleted",
-      description: `"${deletedTitle}" has been removed from your listings.`,
-    });
+      setStudios((prev) =>
+        prev.filter((studio) => studio._id !== deleteTarget._id),
+      );
+      setDeleteTarget(null);
+      toast.add({
+        type: "success",
+        title: "Studio deleted",
+        description: `"${deletedTitle}" has been removed from your listings.`,
+      });
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Could not delete studio",
+        description: requestError instanceof Error ? requestError.message : "Please try again.",
+      });
+    }
   };
 
   return (
