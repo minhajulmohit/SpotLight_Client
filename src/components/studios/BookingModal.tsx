@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ const BookingModal = ({
   hourlyRate,
   securityDeposit,
 }: BookingModalProps) => {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const [bookingDate, setBookingDate] = useState(() => toLocalDate(new Date()));
   const [startTime, setStartTime] = useState("09:00");
@@ -101,6 +103,7 @@ const BookingModal = ({
 
       toast.success("Booking request submitted and is pending approval.");
       onOpenChange(false);
+      router.push("/my-bookings");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Booking could not be submitted.");
     } finally {
