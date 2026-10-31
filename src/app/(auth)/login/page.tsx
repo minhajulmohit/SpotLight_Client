@@ -313,7 +313,22 @@ const LoginPage = () => {
 
             {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast.add({
+                      type: "info",
+                      title: "Notice",
+                      description: "Password reset is disabled for examiner evaluation.",
+                    })
+                  }
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <div className="relative">
                 <LockKeyhole className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
