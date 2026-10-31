@@ -1,6 +1,11 @@
-import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+"use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Heart, MapPin, Star } from "lucide-react";
+import { toast } from "sonner";
+
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 export type StudioCardData = {
@@ -22,6 +27,9 @@ type StudioCardProps = {
 };
 
 const StudioCard = ({ studio }: StudioCardProps) => {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   const studioId = studio._id ?? studio.id ?? "";
   const hourlyRate = studio.hourlyRate ?? studio.rate ?? 0;
   const rating = studio.rating ?? 0;
@@ -31,6 +39,37 @@ const StudioCard = ({ studio }: StudioCardProps) => {
     studio.category?.trim().toLowerCase() === "workshop"
       ? "Art Workshop"
       : studio.category;
+
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && studioId) {
+      const saved = localStorage.getItem(`spotlight_fav_${studioId}`);
+      if (saved === "true") setIsSaved(true);
+    }
+  }, [studioId]);
+
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.info("Please log in to save studios to your wishlist.");
+      return;
+    }
+
+    const next = !isSaved;
+    setIsSaved(next);
+    if (typeof window !== "undefined" && studioId) {
+      if (next) {
+        localStorage.setItem(`spotlight_fav_${studioId}`, "true");
+        toast.success(`"${studio.title}" saved to your wishlist!`);
+      } else {
+        localStorage.removeItem(`spotlight_fav_${studioId}`);
+        toast.info(`"${studio.title}" removed from your wishlist.`);
+      }
+    }
+  };
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
@@ -42,10 +81,28 @@ const StudioCard = ({ studio }: StudioCardProps) => {
           style={{ backgroundImage: `url("${image}")` }}
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/60 to-transparent" />
-        <span className="absolute top-4 left-4 rounded-full bg-background/95 px-3 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
+        
+        {/* Category badge */}
+        <span className="absolute top-3.5 left-3.5 rounded-full bg-background/95 px-3 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
           {category}
         </span>
-        <span className="absolute right-4 bottom-4 flex items-center gap-1 rounded-full bg-zinc-950/85 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+
+        {/* Wishlist Heart Icon (Optional Requirement) */}
+        <button
+          type="button"
+          onClick={toggleWishlist}
+          aria-label={isSaved ? "Remove from wishlist" : "Save to wishlist"}
+          className={`absolute top-3.5 right-3.5 flex size-8 items-center justify-center rounded-full backdrop-blur-md transition-all ${
+            isSaved
+              ? "bg-rose-500 text-white shadow-md scale-105"
+              : "bg-black/40 text-white/90 hover:bg-black/60 hover:text-white"
+          }`}
+        >
+          <Heart className={`size-4 ${isSaved ? "fill-white" : ""}`} />
+        </button>
+
+        {/* Rating badge */}
+        <span className="absolute right-3.5 bottom-3.5 flex items-center gap-1 rounded-full bg-zinc-950/85 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <Star className="size-3.5 fill-amber-400 text-amber-400" />
           {rating.toFixed(1)}
         </span>
