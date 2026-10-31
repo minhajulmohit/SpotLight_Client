@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Aperture,
@@ -16,33 +17,27 @@ import {
   X,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
-import { NavLinks, NavLinksFallback } from "./NavLinks";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-const authButtons = (onNavigate?: () => void) => (
-  <>
-    <Button
-      variant="outline"
-      nativeButton={false}
-      render={<Link href="/login" onClick={onNavigate} />}
-      className="transition-colors duration-200 dark:border-primary/60 dark:text-primary dark:hover:bg-primary/10"
-    >
-      Login
-    </Button>
-    <Button
-      nativeButton={false}
-      render={<Link href="/register" onClick={onNavigate} />}
-      className="transition-colors duration-200"
-    >
-      Register
-    </Button>
-  </>
-);
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/studios", label: "Explore Studios" },
+  { href: "/#how-it-works", label: "How it Works" },
+  { href: "/#about-us", label: "About Us" },
+];
+
+const profileLinks = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/add-studio", label: "Add New Studio", icon: Plus },
+  { href: "/my-listings", label: "My Studio Listings", icon: Store },
+  { href: "/my-bookings", label: "My Bookings", icon: CalendarDays },
+];
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
@@ -64,40 +59,50 @@ const Navbar = () => {
     });
   };
 
-  const profileLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/add-studio", label: "Add New Studio", icon: Plus },
-    { href: "/my-listings", label: "My Studio Listings", icon: Store },
-    { href: "/my-bookings", label: "My Bookings", icon: CalendarDays },
-  ];
+  const linkClass = (href: string) =>
+    `relative py-2 text-sm font-medium tracking-wide transition-colors duration-200 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-left after:rounded-full after:bg-primary after:transition-transform ${
+      pathname === href
+        ? "text-primary after:scale-x-100"
+        : "text-muted-foreground after:scale-x-0 hover:text-foreground hover:after:scale-x-100 dark:text-zinc-400 dark:hover:text-primary"
+    }`;
 
   return (
     <div className="border-b border-border sticky top-0 z-50 bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/60 transition-colors duration-200 dark:border-zinc-800/80 dark:bg-zinc-950/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="group flex items-center gap-2" aria-label="StudioSpace home">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-transform group-hover:rotate-12">
-            <Aperture className="size-5" strokeWidth={2.2} />
-          </span>
-          <span className="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            Studio<span className="text-primary">Space</span>
-          </span>
+        {/* Logo */}
+        <Link href="/" aria-label="SpotLight home">
+          <div>
+            <h1 className="flex text-2xl sm:text-3xl font-bold items-center text-foreground transition-colors duration-200 dark:text-zinc-50">
+              Sp
+              <Aperture
+                size={23}
+                strokeWidth={2}
+                className="slow-spin text-primary"
+              />
+              tLight
+            </h1>
+          </div>
         </Link>
 
         {/* Desktop: nav links */}
         <ul className="hidden lg:flex items-center gap-5">
-          <Suspense fallback={<NavLinksFallback />}>
-            <NavLinks />
-          </Suspense>
+          {navLinks.map(({ href, label }) => (
+            <li key={href}>
+              <Link href={href} className={linkClass(href)}>
+                {label}
+              </Link>
+            </li>
+          ))}
         </ul>
 
-        {/* Desktop: buttons + theme toggle */}
+        {/* Desktop: theme toggle + auth */}
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
           {user ? (
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsProfileOpen((previous) => !previous)}
+                onClick={() => setIsProfileOpen((prev) => !prev)}
                 className="flex items-center gap-2 rounded-full border border-border py-1 pr-2 pl-1 transition-colors hover:border-primary/50 dark:border-zinc-800"
                 aria-expanded={isProfileOpen}
               >
@@ -142,11 +147,27 @@ const Navbar = () => {
               )}
             </div>
           ) : (
-            authButtons()
+            <>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/login" />}
+                className="transition-colors duration-200 dark:border-primary/60 dark:text-primary dark:hover:bg-primary/10"
+              >
+                Login
+              </Button>
+              <Button
+                nativeButton={false}
+                render={<Link href="/register" />}
+                className="transition-colors duration-200"
+              >
+                Register
+              </Button>
+            </>
           )}
         </div>
 
-        {/* Mobile / Tablet: theme toggle + hamburger */}
+        {/* Mobile: theme toggle + hamburger */}
         <div className="lg:hidden flex items-center gap-2">
           <ThemeToggle />
           <button
@@ -161,16 +182,24 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile / Tablet: dropdown panel */}
+      {/* Mobile: dropdown panel */}
       {isOpen && (
         <div className="lg:hidden border-t border-border bg-background transition-colors duration-200 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="container mx-auto flex flex-col gap-4 px-4 py-4">
-            <ul className="flex flex-col gap-1 text-sm [&_a]:block [&_a]:rounded-lg [&_a]:px-3 [&_a]:py-2 dark:[&_a]:text-zinc-100 dark:[&_a:hover]:bg-zinc-800/70">
-              <Suspense fallback={<NavLinksFallback />}>
-                <NavLinks onNavigate={() => setIsOpen(false)} />
-              </Suspense>
+            <ul className="flex flex-col gap-1 text-sm">
+              {navLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={closeMenus}
+                    className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary dark:text-zinc-100 dark:hover:bg-zinc-800/70"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-            <div className="flex flex-col gap-2 border-t border-border pt-4 transition-colors duration-200 dark:border-zinc-800 [&_a]:w-full [&_button]:w-full">
+            <div className="flex flex-col gap-2 border-t border-border pt-4 dark:border-zinc-800">
               {user ? (
                 <>
                   <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3 dark:bg-zinc-800/60">
@@ -203,7 +232,23 @@ const Navbar = () => {
                   </Button>
                 </>
               ) : (
-                authButtons(() => setIsOpen(false))
+                <>
+                  <Button
+                    variant="outline"
+                    nativeButton={false}
+                    render={<Link href="/login" onClick={closeMenus} />}
+                    className="w-full dark:border-primary/60 dark:text-primary dark:hover:bg-primary/10"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    nativeButton={false}
+                    render={<Link href="/register" onClick={closeMenus} />}
+                    className="w-full"
+                  >
+                    Register
+                  </Button>
+                </>
               )}
             </div>
           </div>
