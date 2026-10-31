@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarCheck2, Search, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CheckCircle2, Search, Sparkles } from "lucide-react";
 
 const steps = [
   {
@@ -11,14 +11,21 @@ const steps = [
   },
   {
     number: "02",
-    title: "Choose your session",
+    title: "Select your hours",
     description:
-      "Compare amenities, capacity, hourly pricing, and availability, then request the time that fits your production.",
+      "Compare amenities, capacity, hourly pricing, and availability, then pick the exact time slot that fits your production schedule.",
     icon: CalendarCheck2,
   },
   {
     number: "03",
-    title: "Create without limits",
+    title: "Book instantly",
+    description:
+      "Confirm your session in seconds. Receive an instant booking confirmation and all the details you need before your arrival.",
+    icon: CheckCircle2,
+  },
+  {
+    number: "04",
+    title: "Create & Produce",
     description:
       "Meet your host, settle into the space, and turn your next campaign, recording, shoot, or event into reality.",
     icon: Sparkles,
@@ -38,11 +45,11 @@ const HowItWorks = () => {
           </h2>
           <p className="mt-4 text-muted-foreground">
             From finding your perfect studio to starting your creative session,
-            booking a professional workspace is only three steps away.
+            booking a professional workspace is only four steps away.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map(({ number, title, description, icon: Icon }) => (
             <article
               key={number}
