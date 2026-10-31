@@ -1,48 +1,41 @@
 import Link from "next/link";
-import { ArrowUpRight, Camera, Clapperboard, Headphones, Mic2, Palette, Podcast } from "lucide-react";
+import { ArrowUpRight, Camera, Clapperboard, Headphones, Mic2, Palette } from "lucide-react";
 
 const categories = [
   {
-    name: "Photo Studios",
+    name: "Photo Studio",
     filter: "Photo Studio",
     description: "Daylight lofts, fashion sets, and product spaces.",
     icon: Camera,
     image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80",
   },
   {
-    name: "Film & Video",
+    name: "Sound Stage",
     filter: "Sound Stage",
     description: "Production-ready sets and cinematic sound stages.",
     icon: Clapperboard,
     image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80",
   },
   {
-    name: "Recording Studios",
-    filter: "Music Suite",
-    description: "Acoustically treated rooms for music and voice.",
-    icon: Headphones,
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    name: "Podcast Rooms",
+    name: "Podcast Lounge",
     filter: "Podcast Lounge",
     description: "Broadcast setups made for clear conversation.",
-    icon: Podcast,
+    icon: Mic2,
     image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=900&q=80",
   },
   {
-    name: "Creative Offices",
+    name: "Music Suite",
+    filter: "Music Suite",
+    description: "Acoustically treated rooms for music and voice.",
+    icon: Headphones,
+    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    name: "Art Workshop",
     filter: "Art Workshop",
     description: "Flexible spaces for teams, workshops, and shoots.",
     icon: Palette,
     image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    name: "Live Events",
-    filter: "Art Workshop",
-    description: "Flexible venues for intimate events and showcases.",
-    icon: Mic2,
-    image: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
@@ -54,7 +47,9 @@ const StudioCategories = () => (
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-500">Find your space</p>
           <h2 className="mt-3 font-heading text-3xl font-bold sm:text-4xl">Explore by category</h2>
         </div>
-        <Link href="/studios" className="text-sm font-semibold text-amber-500 transition-colors hover:text-amber-400">View all studios</Link>
+        <Link href="/studios" className="text-sm font-semibold text-amber-500 transition-colors hover:text-amber-400">
+          View all studios
+        </Link>
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

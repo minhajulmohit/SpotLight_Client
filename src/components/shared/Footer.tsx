@@ -111,7 +111,7 @@ const categoryLinks = (
   <>
     <li>
       <Link
-        href="/studios?category=photo-studios"
+        href={{ pathname: "/studios", query: { category: "Photo Studio" } }}
         className={linkClass}
       >
         Photo Studios
@@ -119,7 +119,7 @@ const categoryLinks = (
     </li>
     <li>
       <Link
-        href="/studios?category=sound-stages"
+        href={{ pathname: "/studios", query: { category: "Sound Stage" } }}
         className={linkClass}
       >
         Sound Stages
@@ -127,15 +127,15 @@ const categoryLinks = (
     </li>
     <li>
       <Link
-        href="/studios?category=podcast-rooms"
+        href={{ pathname: "/studios", query: { category: "Podcast Lounge" } }}
         className={linkClass}
       >
-        Podcast Rooms
+        Podcast Lounges
       </Link>
     </li>
     <li>
       <Link
-        href="/studios?category=music-suites"
+        href={{ pathname: "/studios", query: { category: "Music Suite" } }}
         className={linkClass}
       >
         Music Suites
@@ -143,7 +143,7 @@ const categoryLinks = (
     </li>
     <li>
       <Link
-        href="/studios?category=art-workshops"
+        href={{ pathname: "/studios", query: { category: "Art Workshop" } }}
         className={linkClass}
       >
         Art Workshops
