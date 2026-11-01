@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   CalendarCheck,
@@ -69,8 +69,10 @@ function GoogleIcon() {
   );
 }
 
-const LoginPage = () => {
+const LoginContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackURL = searchParams.get("callbackURL") || "/dashboard";
 
   const [values, setValues] = useState<FormValues>({
     email: "",
@@ -147,7 +149,7 @@ const LoginPage = () => {
         description: "You are logged in to SpotLight.",
       });
 
-      router.push("/");
+      router.push(callbackURL);
       router.refresh();
     } catch {
       const message =
@@ -170,7 +172,7 @@ const LoginPage = () => {
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: callbackURL.startsWith("/") ? callbackURL : "/",
       });
 
       if (error) {
@@ -425,5 +427,11 @@ const LoginPage = () => {
     </div>
   );
 };
+
+const LoginPage = () => (
+  <Suspense fallback={<div className="min-h-screen" />}>
+    <LoginContent />
+  </Suspense>
+);
 
 export default LoginPage;

@@ -41,9 +41,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const STUDIO_API_ENDPOINT = `${
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-}/add-new-studio`;
+const STUDIO_API_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+  }/add-new-studio`;
 
 const CATEGORIES = [
   "Photo Studio",
@@ -126,12 +125,12 @@ const AddStudioForm = () => {
     );
   };
 
-  // Image upload using ImgBB API
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check size limit (max 10MB)
+
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size should be less than 10MB.");
       return;
@@ -153,12 +152,12 @@ const AddStudioForm = () => {
 
       if (data?.data?.url) {
         update("imageUrl", data.data.url);
-        toast.success("Image uploaded to ImgBB successfully!");
+        toast.success("Image uploaded successfully!");
       } else {
-        throw new Error(data?.error?.message ?? "ImgBB upload failed.");
+        throw new Error(data?.error?.message ?? "Upload failed.");
       }
     } catch (error) {
-      toast.error("Could not upload to ImgBB. You can paste an image URL directly.");
+      toast.error("Could not upload. You can paste an image URL directly.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -383,7 +382,7 @@ const AddStudioForm = () => {
                   type="number"
                   inputMode="decimal"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={form.hourlyRate}
                   onChange={(event) => update("hourlyRate", event.target.value)}
                   placeholder="75"
@@ -405,7 +404,7 @@ const AddStudioForm = () => {
                   type="number"
                   inputMode="decimal"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={form.securityDeposit}
                   onChange={(event) =>
                     update("securityDeposit", event.target.value)
@@ -556,11 +555,10 @@ const AddStudioForm = () => {
                 <label
                   key={amenity.value}
                   htmlFor={`amenity-${amenity.value}`}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors duration-200 ${
-                    isSelected
-                      ? "border-primary/50 bg-primary/10 text-foreground"
-                      : "border-border text-muted-foreground hover:bg-muted dark:border-zinc-800 dark:hover:bg-zinc-800/60"
-                  }`}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors duration-200 ${isSelected
+                    ? "border-primary/50 bg-primary/10 text-foreground"
+                    : "border-border text-muted-foreground hover:bg-muted dark:border-zinc-800 dark:hover:bg-zinc-800/60"
+                    }`}
                 >
                   <Checkbox
                     id={`amenity-${amenity.value}`}
