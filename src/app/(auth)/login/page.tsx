@@ -36,7 +36,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const highlights = [
   {
     icon: CalendarCheck,
-    title: "Your bookings, organised",
+    title: "Your bookings, organized",
     description: "See every upcoming shoot and request at a glance.",
   },
   {

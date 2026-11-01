@@ -13,8 +13,10 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
+  Upload,
   User,
   UserPlus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -95,8 +97,9 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const isBusy = isSubmitting || isGoogleLoading;
+  const isBusy = isSubmitting || isGoogleLoading || isUploadingImage;
 
   const handleChange =
     (field: keyof FormValues) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +107,56 @@ const RegisterPage = () => {
       setErrors((previous) => ({ ...previous, [field]: undefined }));
       setFormError(null);
     };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size should be less than 10MB.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setFormError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const apiKey =
+      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "ca7705d5cd180ba7cfca2b3ef496b6e6";
+
+    if (!apiKey) {
+      toast.error("ImgBB API key is missing. Please add NEXT_PUBLIC_IMGBB_API_KEY to .env");
+      setIsUploadingImage(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data?.data?.url) {
+        setValues((previous) => ({ ...previous, photoURL: data.data.url }));
+        setErrors((previous) => ({ ...previous, photoURL: undefined }));
+        toast.success("Profile photo uploaded successfully!");
+      } else {
+        const errorMsg = data?.error?.message ?? "Upload to ImgBB failed.";
+        throw new Error(errorMsg);
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Could not upload image.";
+      toast.error(`ImgBB Upload Error: ${message}`, {
+        description: "Please check your ImgBB API key in .env or paste a direct image URL.",
+      });
+    } finally {
+      setIsUploadingImage(false);
+      event.target.value = "";
+    }
+  };
 
   const validate = (): FormErrors => {
     const nextErrors: FormErrors = {};
@@ -116,7 +169,9 @@ const RegisterPage = () => {
       nextErrors.email = "Please enter a valid email address.";
     }
 
-    if (!urlPattern.test(values.photoURL.trim())) {
+    if (!values.photoURL.trim()) {
+      nextErrors.photoURL = "Please upload a photo or provide a photo URL.";
+    } else if (!urlPattern.test(values.photoURL.trim())) {
       nextErrors.photoURL =
         "Photo URL must start with http:// or https://.";
     }
@@ -157,7 +212,7 @@ const RegisterPage = () => {
         name: values.name.trim(),
         email: values.email.trim(),
         password: values.password,
-        // Better Auth stores the profile photo in the user's `image` field.
+
         image: values.photoURL.trim(),
       });
 
@@ -169,7 +224,7 @@ const RegisterPage = () => {
         const message = isDuplicate
           ? "An account with this email already exists. Please log in instead."
           : error.message ||
-            "Could not create your account. Please try again.";
+          "Could not create your account. Please try again.";
 
         setFormError(message);
         toast.error("Registration failed", { description: message });
@@ -357,9 +412,45 @@ const RegisterPage = () => {
               )}
             </div>
 
-            {/* Photo URL */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="photoURL">Photo URL</Label>
+            {/* Photo & ImgBB Upload */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="photoURL">Profile Photo</Label>
+                {isUploadingImage && (
+                  <span className="flex items-center gap-1.5 text-xs text-primary">
+                    <Loader2 className="size-3.5 animate-spin" /> Uploading...
+                  </span>
+                )}
+              </div>
+
+              {/* Upload via ImgBB */}
+              <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border bg-muted/30 p-3 dark:border-zinc-800">
+                <label
+                  htmlFor="register-imgbb-file"
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition hover:bg-muted dark:border-zinc-800 ${isBusy ? "pointer-events-none opacity-60" : ""
+                    }`}
+                >
+                  {isUploadingImage ? (
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                  ) : (
+                    <Upload className="size-4 text-primary" />
+                  )}
+                  <span>
+                    {isUploadingImage
+                      ? "Uploading image..."
+                      : "Upload Image from Device"}                  </span>
+                  <input
+                    id="register-imgbb-file"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isBusy}
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
+
+              {/* Direct image URL input */}
               <div className="relative">
                 <ImageIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -367,18 +458,65 @@ const RegisterPage = () => {
                   name="photoURL"
                   type="url"
                   autoComplete="photo"
-                  placeholder="https://example.com/photo.jpg"
-                  className="h-11 pl-9"
+                  placeholder="Or paste direct image URL (https://...)"
+                  className="h-11 pr-9 pl-9"
                   value={values.photoURL}
                   onChange={handleChange("photoURL")}
                   aria-invalid={Boolean(errors.photoURL)}
+                  disabled={isBusy}
                 />
+                {values.photoURL && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValues((prev) => ({ ...prev, photoURL: "" }));
+                      setErrors((prev) => ({ ...prev, photoURL: undefined }));
+                    }}
+                    title="Clear image"
+                    className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
               </div>
+
+              {/* Image Preview */}
+              {values.photoURL && urlPattern.test(values.photoURL) && (
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-2.5 dark:border-zinc-800">
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border dark:border-zinc-700">
+                    <img
+                      src={values.photoURL}
+                      alt="Profile preview"
+                      className="size-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      Photo selected
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {values.photoURL}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValues((prev) => ({ ...prev, photoURL: "" }));
+                      setErrors((prev) => ({ ...prev, photoURL: undefined }));
+                    }}
+                    className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    title="Remove photo"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              )}
+
               {errors.photoURL ? (
                 <p className="text-xs text-destructive">{errors.photoURL}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Direct image link starting with http:// or https://.
+                  Upload an image from your device via ImgBB or paste a direct image URL.
                 </p>
               )}
             </div>

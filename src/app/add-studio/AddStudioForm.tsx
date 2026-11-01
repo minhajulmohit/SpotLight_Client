@@ -142,7 +142,7 @@ const AddStudioForm = () => {
     formData.append("image", file);
 
     const apiKey =
-      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "c0379965d83626fa323fcf63e9f0298a";
+      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "ca7705d5cd180ba7cfca2b3ef496b6e6";
 
     try {
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
