@@ -18,6 +18,8 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 import {
   Dialog,
   DialogContent,
@@ -75,7 +77,7 @@ const MyBookingsPage = () => {
   const fetchBookings = async (email: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/bookings?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`${API_BASE}/bookings?email=${encodeURIComponent(email)}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.message ?? "Failed to load bookings.");
       setBookings(Array.isArray(data) ? data : []);
@@ -102,10 +104,9 @@ const MyBookingsPage = () => {
     setCancellingId(bookingId);
 
     try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
+      const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel" }),
       });
       const data = await response.json();
 

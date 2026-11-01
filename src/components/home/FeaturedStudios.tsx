@@ -8,6 +8,8 @@ import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const FeaturedStudios = () => {
   const [studios, setStudios] = useState<StudioCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +18,7 @@ const FeaturedStudios = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/studios/featured", { signal: controller.signal })
+    fetch(`${API_BASE}/featured-studio`, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);

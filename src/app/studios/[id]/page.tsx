@@ -62,6 +62,8 @@ export type StudioDetails = {
 const unwrapStudio = (data: StudioDetails | { studio?: StudioDetails }) =>
   "studio" in data && data.studio ? data.studio : (data as StudioDetails);
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const StudioDetailsSkeleton = () => (
   <div className="container mx-auto max-w-6xl px-4 py-10">
     <div className="animate-pulse">
@@ -95,7 +97,7 @@ const StudioDetailsContent = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`/api/studios/${encodeURIComponent(params.id)}`, {
+    fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
       signal: controller.signal,
       cache: "no-store",
     })

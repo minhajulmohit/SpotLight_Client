@@ -52,6 +52,8 @@ const categoriesMatch = (studioCategory: string, selectedCategory: string) => {
   );
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const StudiosContent = () => {
   const searchParams = useSearchParams();
   const [studios, setStudios] = useState<StudioCardData[]>([]);
@@ -77,7 +79,7 @@ const StudiosContent = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/studios", { signal: controller.signal, cache: "no-store" })
+    fetch(`${API_BASE}/all-studio`, { signal: controller.signal, cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) {

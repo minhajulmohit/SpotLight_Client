@@ -56,6 +56,8 @@ type StudioForm = {
   hostEmail: string;
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const EditStudioContent = () => {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -82,7 +84,7 @@ const EditStudioContent = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`/api/studios/${encodeURIComponent(params.id)}`, {
+    fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
       signal: controller.signal,
       cache: "no-store",
     })
@@ -156,7 +158,7 @@ const EditStudioContent = () => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/studios/${encodeURIComponent(params.id)}`, {
+      const response = await fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

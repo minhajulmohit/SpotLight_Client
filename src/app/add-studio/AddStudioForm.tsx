@@ -479,11 +479,11 @@ const AddStudioForm = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Upload className="size-4 text-primary" />
-                    <span>Upload via ImgBB</span>
+                    <span>Upload image...</span>
                   </div>
                   {isUploadingImage && (
                     <span className="flex items-center gap-1.5 text-xs text-primary">
-                      <Loader2 className="size-3.5 animate-spin" /> Uploading to ImgBB...
+                      <Loader2 className="size-3.5 animate-spin" /> Uploading...
                     </span>
                   )}
                 </div>
@@ -589,7 +589,7 @@ const AddStudioForm = () => {
             <Textarea
               id="overview"
               name="overview"
-              rows={5}
+              rows={6}
               value={form.overview}
               onChange={(event) => update("overview", event.target.value)}
               placeholder="Highlight studio dimensions, cyclorama dimensions, sound acoustic rating, power capacity..."
@@ -601,10 +601,9 @@ const AddStudioForm = () => {
         </CardContent>
       </Card>
 
-      {/* Read-only User Email & Name as required by Assignment Document */}
       <Card className="mt-6 dark:bg-zinc-900 dark:ring-zinc-800">
         <CardHeader>
-          <CardTitle>Host Details (Read-only)</CardTitle>
+          <CardTitle>Host Details</CardTitle>
           <CardDescription>
             Automatically linked to your authenticated creator account.
           </CardDescription>
@@ -613,7 +612,7 @@ const AddStudioForm = () => {
           <FieldGroup>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="hostName">Host Name (Read-only)</FieldLabel>
+                <FieldLabel htmlFor="hostName">Host Name</FieldLabel>
                 <Input
                   id="hostName"
                   name="hostName"
@@ -624,7 +623,7 @@ const AddStudioForm = () => {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="hostEmail">Host Email (Read-only)</FieldLabel>
+                <FieldLabel htmlFor="hostEmail">Host Email</FieldLabel>
                 <Input
                   id="hostEmail"
                   name="hostEmail"

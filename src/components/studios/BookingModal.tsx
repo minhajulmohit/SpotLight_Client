@@ -71,7 +71,8 @@ const BookingModal = ({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/bookings", {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+      const response = await fetch(`${API_BASE}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

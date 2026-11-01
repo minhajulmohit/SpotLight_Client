@@ -20,6 +20,8 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
@@ -34,12 +36,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isPending && user?.email) {
-      // Fetch user's studios & bookings counts
+
       Promise.all([
-        fetch("/api/studios", { cache: "no-store" })
+        fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
           .then((r) => r.json())
           .catch(() => []),
-        fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`, { cache: "no-store" })
+        fetch(`${API_BASE}/bookings?email=${encodeURIComponent(user.email)}`, { cache: "no-store" })
           .then((r) => r.json())
           .catch(() => []),
       ]).then(([studiosData, bookingsData]) => {

@@ -104,7 +104,7 @@ const MyListingsPage = () => {
     setIsDeleting(true);
     const deletedTitle = deleteTarget.title;
     try {
-      const response = await fetch(`/api/studios/${deleteTarget._id}`, {
+      const response = await fetch(`${API_BASE}/all-studio/${deleteTarget._id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Studio could not be deleted.");
