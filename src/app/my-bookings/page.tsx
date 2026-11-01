@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Calendar,
   Clock,
   DollarSign,
   Download,
+  FileDown,
   LoaderCircle,
-  Printer,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +45,197 @@ export type Booking = {
   createdAt?: string;
 };
 
+const money = (value: number) => `$${Number(value || 0).toFixed(2)}`;
+
+const statusTone: Record<
+  Booking["status"],
+  { fill: [number, number, number]; text: [number, number, number] }
+> = {
+  Confirmed: { fill: [209, 250, 229], text: [4, 120, 87] },
+  Pending: { fill: [254, 243, 199], text: [180, 83, 9] },
+  Completed: { fill: [219, 234, 254], text: [29, 78, 216] },
+  Cancelled: { fill: [255, 228, 230], text: [190, 18, 60] },
+};
+
+/**
+ * Builds and downloads a real PDF invoice (no browser print dialog), so the
+ * receipt can be stored, emailed, or attached to an expense report.
+ */
+const downloadInvoicePdf = async (booking: Booking) => {
+  const { jsPDF } = await import("jspdf");
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const contentWidth = pageWidth - margin * 2;
+  const invoiceId = booking._id.slice(-8).toUpperCase();
+  const rateAmount = booking.hourlyRate * booking.totalHours;
+  const deposit = booking.securityDeposit || 0;
+
+  // Header
+  doc.setFillColor(24, 24, 27);
+  doc.rect(0, 0, pageWidth, 100, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.text("SpotLight", margin, 48);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(212, 212, 216);
+  doc.text(
+    "Creative Workspace & Production Studio Marketplace",
+    margin,
+    66,
+  );
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text("BOOKING INVOICE", pageWidth - margin, 48, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(212, 212, 216);
+  doc.text(`Invoice ID: #${invoiceId}`, pageWidth - margin, 66, {
+    align: "right",
+  });
+  doc.text(
+    `Issued: ${new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })}`,
+    pageWidth - margin,
+    82,
+    { align: "right" },
+  );
+
+  // Status pill
+  const tone = statusTone[booking.status] ?? statusTone.Pending;
+  doc.setFillColor(...tone.fill);
+  doc.roundedRect(margin, 124, 92, 24, 12, 12, "F");
+  doc.setTextColor(...tone.text);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(booking.status.toUpperCase(), margin + 46, 139, { align: "center" });
+
+  // Studio summary
+  let y = 186;
+  doc.setTextColor(113, 113, 122);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("STUDIO", margin, y);
+
+  y += 18;
+  doc.setTextColor(24, 24, 27);
+  doc.setFontSize(16);
+  doc.text(booking.studioTitle, margin, y);
+
+  y += 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(82, 82, 91);
+  doc.text(`Host: ${booking.hostName} (${booking.hostEmail})`, margin, y);
+
+  // Guest + schedule columns
+  y += 44;
+  const colRight = margin + contentWidth / 2;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text("GUEST CREATOR", margin, y);
+  doc.text("BOOKING SCHEDULE", colRight, y);
+
+  y += 17;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(24, 24, 27);
+  doc.text(booking.customerName, margin, y);
+  doc.text(booking.bookingDate, colRight, y);
+
+  y += 15;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(82, 82, 91);
+  doc.text(booking.customerEmail, margin, y);
+  doc.text(
+    `${booking.startTime} - ${booking.endTime}  (${booking.totalHours} hrs)`,
+    colRight,
+    y,
+  );
+
+  // Divider
+  y += 28;
+  doc.setDrawColor(228, 228, 231);
+  doc.setLineWidth(1);
+  doc.line(margin, y, pageWidth - margin, y);
+
+  // Line items
+  y += 26;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text("DESCRIPTION", margin, y);
+  doc.text("AMOUNT", pageWidth - margin, y, { align: "right" });
+
+  const addLine = (label: string, amount: number) => {
+    y += 24;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(63, 63, 70);
+    doc.text(label, margin, y);
+    doc.setTextColor(24, 24, 27);
+    doc.text(money(amount), pageWidth - margin, y, { align: "right" });
+  };
+
+  addLine(
+    `Studio rate (${money(booking.hourlyRate)}/hr × ${booking.totalHours} hrs)`,
+    rateAmount,
+  );
+
+  if (deposit > 0) {
+    addLine("Security deposit (refundable)", deposit);
+  }
+
+  // Total
+  y += 22;
+  doc.setDrawColor(228, 228, 231);
+  doc.line(margin, y, pageWidth - margin, y);
+
+  y += 12;
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(margin, y, contentWidth, 52, 8, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(24, 24, 27);
+  doc.text("TOTAL AMOUNT", margin + 16, y + 32);
+  doc.setFontSize(16);
+  doc.setTextColor(180, 130, 20);
+  doc.text(money(booking.totalPrice), pageWidth - margin - 16, y + 33, {
+    align: "right",
+  });
+
+  // Footer
+  const footerY = pageHeight - 72;
+  doc.setDrawColor(228, 228, 231);
+  doc.line(margin, footerY, pageWidth - margin, footerY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(
+    "Thank you for creating with SpotLight. This receipt was generated automatically.",
+    margin,
+    footerY + 18,
+  );
+  doc.text(
+    `Booking reference: ${booking._id}`,
+    margin,
+    footerY + 32,
+  );
+
+  doc.save(`spotlight-invoice-${booking._id.slice(-8)}.pdf`);
+};
+
 const getStatusBadge = (status: Booking["status"]) => {
   switch (status) {
     case "Confirmed":
@@ -62,7 +252,6 @@ const getStatusBadge = (status: Booking["status"]) => {
 };
 
 const MyBookingsPage = () => {
-  const router = useRouter();
   const { data: session, isPending: isAuthPending } = authClient.useSession();
   const user = session?.user;
 
@@ -128,6 +317,17 @@ const MyBookingsPage = () => {
       toast.error(error instanceof Error ? error.message : "Failed to cancel booking.");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!selectedBookingForInvoice) return;
+
+    try {
+      await downloadInvoicePdf(selectedBookingForInvoice);
+      toast.success("Invoice PDF downloaded.");
+    } catch {
+      toast.error("Could not generate the invoice PDF. Please try again.");
     }
   };
 
@@ -439,11 +639,11 @@ const MyBookingsPage = () => {
             </Button>
             <Button
               type="button"
-              onClick={() => window.print()}
+              onClick={handleDownloadInvoice}
               className="gap-1.5"
             >
-              <Printer className="size-4" />
-              Print / Save PDF
+              <FileDown className="size-4" />
+              Download PDF
             </Button>
           </DialogFooter>
         </DialogContent>

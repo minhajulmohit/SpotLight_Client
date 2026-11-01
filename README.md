@@ -17,7 +17,8 @@
 * **JWT-Protected Mutations (Challenge 1):** Every create/update/delete request is guarded by a JWT stored in an HTTPOnly cookie. Unauthenticated or expired requests receive `401 Unauthorized`, and non-owners receive `403 Forbidden`.
 * **Conflict-Free Booking System with Double-Booking Prevention:** Interactive booking modal with automatic hour and price calculation. Backend algorithm prevents overlapping reservations on identical time slots (returning HTTP 409 conflict).
 * **Host Guarantee & Creator Support (Platform Assurances):** Integrated trust framework covering $1M liability protection, verified creator/host profiles, equipment safety protocols, and 24/7 dedicated support.
-* **Downloadable & Printable PDF Booking Invoices:** Instant official receipts generated for all reservations with client/host breakdown, hourly rate math, and printable PDF formatting.
+* **Downloadable PDF Booking Invoices:** Official receipts generated client-side with **jsPDF** — studio/host breakdown, schedule, hourly rate math, deposit and total — downloaded as `spotlight-invoice-<id>.pdf` without opening the browser print dialog.
+* **MongoDB-Backed Wishlist:** Signed-in creators can heart any studio and keep it saved across browsers and devices. Saves live in a `wishlists` collection behind JWT-protected API routes (no more localStorage-only favourites).
 * **Comprehensive Light / Dark Theme Customization:** Instant toggle between light and dark modes with persisted user preference across all components, forms, and dialogs.
 * **Custom Creative 404 Experience:** Branded "Scene Not Found" error page with creative spotlight illustration and instant navigation back to the workspace catalog.
 
@@ -25,7 +26,7 @@
 
 ## 🛠️ Tech Stack
 
-* **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Swiper 14 (hero slider), Lucide React, Sonner Toast
+* **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Swiper 14 (hero slider), jsPDF (invoice export), Lucide React, Sonner Toast
 * **Authentication:** BetterAuth with MongoDB Adapter, persistent session storage, Google OAuth support, JWT authorization for the Express API
 * **Backend:** Node.js, Express.js, MongoDB Atlas (Native Driver), CORS, dotenv
 * **Media Storage:** ImgBB Cloud API integration for direct photo uploads

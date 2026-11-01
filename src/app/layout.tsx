@@ -6,6 +6,7 @@ import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import AuthTokenSync from "@/components/shared/AuthTokenSync";
 import ThemeProvider from "@/providers/ThemeProvider";
+import WishlistProvider from "@/providers/WishlistProvider";
 import { Toaster } from "@/components/ui/toast";
 import { Toaster as SonnerToaster } from "sonner";
 
@@ -39,17 +40,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         className={`${oswald.variable} ${inter.variable} min-h-screen antialiased font-sans flex flex-col`}
       >
         <ThemeProvider>
-          <AuthTokenSync />
-          <Suspense
-            fallback={
-              <div className="h-16 w-full border-b border-border bg-background" />
-            }
-          >
-            <Navbar />
-          </Suspense>
+          <WishlistProvider>
+            <AuthTokenSync />
+            <Suspense
+              fallback={
+                <div className="h-16 w-full border-b border-border bg-background" />
+              }
+            >
+              <Navbar />
+            </Suspense>
 
-          <main className="flex-1">{children}</main>
-          <Footer />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </WishlistProvider>
           <Toaster />
           <SonnerToaster position="top-right" richColors closeButton />
         </ThemeProvider>

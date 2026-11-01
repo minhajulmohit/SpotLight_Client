@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart, MapPin, Star } from "lucide-react";
-import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth-client";
+import { useWishlist } from "@/providers/WishlistProvider";
 import { Button } from "@/components/ui/button";
 
 export type StudioCardData = {
@@ -28,8 +26,7 @@ type StudioCardProps = {
 };
 
 const StudioCard = ({ studio }: StudioCardProps) => {
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const { isSaved, toggleWishlist } = useWishlist();
 
   const studioId = studio._id ?? studio.id ?? "";
   const hourlyRate = studio.hourlyRate ?? studio.rate ?? 0;
@@ -45,35 +42,12 @@ const StudioCard = ({ studio }: StudioCardProps) => {
       ? "Art Workshop"
       : studio.category;
 
-  const [isSaved, setIsSaved] = useState(false);
+  const saved = isSaved(studioId);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && studioId) {
-      const saved = localStorage.getItem(`spotlight_fav_${studioId}`);
-      if (saved === "true") setIsSaved(true);
-    }
-  }, [studioId]);
-
-  const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user) {
-      toast.info("Please log in to save studios to your wishlist.");
-      return;
-    }
-
-    const next = !isSaved;
-    setIsSaved(next);
-    if (typeof window !== "undefined" && studioId) {
-      if (next) {
-        localStorage.setItem(`spotlight_fav_${studioId}`, "true");
-        toast.success(`"${studio.title}" saved to your wishlist!`);
-      } else {
-        localStorage.removeItem(`spotlight_fav_${studioId}`);
-        toast.info(`"${studio.title}" removed from your wishlist.`);
-      }
-    }
+  const handleToggleWishlist = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void toggleWishlist(studio);
   };
 
   return (
@@ -95,15 +69,16 @@ const StudioCard = ({ studio }: StudioCardProps) => {
         {/* Wishlist Heart Icon (Optional Requirement) */}
         <button
           type="button"
-          onClick={toggleWishlist}
-          aria-label={isSaved ? "Remove from wishlist" : "Save to wishlist"}
+          onClick={handleToggleWishlist}
+          aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
+          aria-pressed={saved}
           className={`absolute top-3.5 right-3.5 flex size-8 items-center justify-center rounded-full backdrop-blur-md transition-all ${
-            isSaved
+            saved
               ? "bg-rose-500 text-white shadow-md scale-105"
               : "bg-black/40 text-white/90 hover:bg-black/60 hover:text-white"
           }`}
         >
-          <Heart className={`size-4 ${isSaved ? "fill-white" : ""}`} />
+          <Heart className={`size-4 ${saved ? "fill-white" : ""}`} />
         </button>
 
         {/* Rating badge */}

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
   ImageIcon,
   Loader2,
   MapPin,
