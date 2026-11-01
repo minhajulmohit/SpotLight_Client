@@ -1,5 +1,7 @@
+import { jwtClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-// Better Auth is served from this app's own /api/auth route, so the client
-// defaults to the current origin. No public URL or secret is required here.
-export const authClient = createAuthClient();
+export const authClient = createAuthClient({
+  baseURL: process.env.BETTER_AUTH_URL,
+  plugin: [jwtClient()],
+});

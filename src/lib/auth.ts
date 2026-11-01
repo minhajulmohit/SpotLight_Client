@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
+import { jwt } from "better-auth/plugins";
 
 const client = new MongoClient(process.env.MONGODB_URI as string);
 const db = client.db("spotlight");
@@ -12,8 +13,6 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
-      // Defence in depth: the form validates too, but the API must also
-      // reject passwords that break the assignment rules.
       if (ctx.path !== "/sign-up/email") return;
 
       const password = ctx.body?.password;
@@ -33,9 +32,9 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    // Assignment rule: at least 6 characters.
+
     minPasswordLength: 6,
-    // Registration should send the user to /login instead of creating a session.
+
     autoSignIn: false,
   },
   socialProviders:
@@ -50,4 +49,8 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     client,
   }),
+  plugins: [jwt()],
+  session: {
+    cookieCache: { strategy: "jwt", enabled: true, maxAge: 7 * 24 * 60 * 60 },
+  },
 });

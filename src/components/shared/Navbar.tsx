@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
@@ -38,10 +38,42 @@ const profileLinks = [
 const NavbarContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
+
+  // The profile dropdown opens on click, so close it when the user clicks
+  // elsewhere or presses Escape.
+  useEffect(() => {
+    if (!isProfileOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (
+        profileMenuRef.current &&
+        target &&
+        !profileMenuRef.current.contains(target)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsProfileOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isProfileOpen]);
 
   const closeMenus = () => {
     setIsOpen(false);
@@ -106,16 +138,14 @@ const NavbarContent = () => {
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
           {user ? (
-            <div
-              className="relative"
-              onMouseEnter={() => setIsProfileOpen(true)}
-              onMouseLeave={() => setIsProfileOpen(false)}
-            >
+            <div className="relative" ref={profileMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((prev) => !prev)}
                 className="flex items-center gap-2 rounded-full border border-border py-1 pr-2 pl-1 transition-colors hover:border-primary/50 dark:border-zinc-800"
                 aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
+                aria-label="Open profile menu"
               >
                 {user.image ? (
                   <img src={user.image} alt="" className="size-8 rounded-full object-cover" />
