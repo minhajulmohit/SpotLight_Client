@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Aperture, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 
 
@@ -168,6 +171,20 @@ const legalLinks = (
 );
 
 const Footer = () => {
+  const handleSubscribe = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const email = String(new FormData(form).get("email") ?? "").trim();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Enter a valid email address to subscribe.");
+      return;
+    }
+
+    toast.success("You're on the list! Watch your inbox for new studio drops.");
+    form.reset();
+  };
+
   return (
     <footer className="border-t border-border bg-background transition-colors duration-200 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
@@ -216,7 +233,7 @@ const Footer = () => {
             <p className="mt-4 text-sm text-muted-foreground transition-colors duration-200 dark:text-zinc-400">
               Get new studio listings and creative tips straight to your inbox.
             </p>
-            <form className="mt-4 flex gap-2">
+            <form className="mt-4 flex gap-2" onSubmit={handleSubscribe}>
               <label htmlFor="newsletter-email" className="sr-only">
                 Email address
               </label>

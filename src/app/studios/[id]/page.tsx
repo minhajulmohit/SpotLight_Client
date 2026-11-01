@@ -219,7 +219,7 @@ const StudioDetailsContent = () => {
               </span>
               <span className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm font-semibold dark:border-zinc-800">
                 <Star className="size-4 fill-amber-400 text-amber-400" />
-                {rating.toFixed(1)}
+                {rating > 0 ? rating.toFixed(1) : "New"}
               </span>
             </div>
             <h1 className="mt-4 font-heading text-3xl font-bold sm:text-5xl">{studio.title}</h1>

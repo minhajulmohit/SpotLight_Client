@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { authClient } from "@/lib/auth-client";
+import { logoutJwt } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const navLinks = [
@@ -48,20 +49,26 @@ const NavbarContent = () => {
   };
 
   const handleLogout = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          closeMenus();
-          router.push("/");
-          router.refresh();
-        },
-      },
-    });
+    try {
+      await authClient.signOut();
+      await logoutJwt();
+    } finally {
+      closeMenus();
+      router.push("/");
+      router.refresh();
+    }
+  };
+
+  const isLinkActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    if (href === "/studios") return pathname.startsWith("/studios");
+    if (href === "/#about-us" || href === "/about-us") return pathname === "/about-us";
+    return pathname === href;
   };
 
   const linkClass = (href: string) =>
     `relative py-2 text-sm font-medium tracking-wide transition-colors duration-200 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-left after:rounded-full after:bg-primary after:transition-transform ${
-      pathname === href
+      isLinkActive(href)
         ? "text-primary after:scale-x-100"
         : "text-muted-foreground after:scale-x-0 hover:text-foreground hover:after:scale-x-100 dark:text-zinc-400 dark:hover:text-primary"
     }`;
@@ -99,7 +106,11 @@ const NavbarContent = () => {
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
           {user ? (
-            <div className="relative">
+            <div
+              className="relative"
+              onMouseEnter={() => setIsProfileOpen(true)}
+              onMouseLeave={() => setIsProfileOpen(false)}
+            >
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((prev) => !prev)}

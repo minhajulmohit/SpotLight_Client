@@ -17,6 +17,7 @@ export type StudioCardData = {
   hourlyRate?: number;
   rate?: number;
   rating?: number;
+  images?: string[];
   imageUrl?: string;
   image?: string;
   bannerImage?: string;
@@ -34,7 +35,11 @@ const StudioCard = ({ studio }: StudioCardProps) => {
   const hourlyRate = studio.hourlyRate ?? studio.rate ?? 0;
   const rating = studio.rating ?? 0;
   const image =
-    studio.imageUrl ?? studio.image ?? studio.bannerImage ?? "/studio-placeholder.jpg";
+    studio.images?.find(Boolean) ??
+    studio.imageUrl ??
+    studio.image ??
+    studio.bannerImage ??
+    "/studio-placeholder.jpg";
   const category =
     studio.category?.trim().toLowerCase() === "workshop"
       ? "Art Workshop"
@@ -104,7 +109,7 @@ const StudioCard = ({ studio }: StudioCardProps) => {
         {/* Rating badge */}
         <span className="absolute right-3.5 bottom-3.5 flex items-center gap-1 rounded-full bg-zinc-950/85 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <Star className="size-3.5 fill-amber-400 text-amber-400" />
-          {rating.toFixed(1)}
+          {rating > 0 ? rating.toFixed(1) : "New"}
         </span>
       </div>
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import type { StudioDetails } from "@/app/studios/[id]/page";
 import { authClient } from "@/lib/auth-client";
+import { API_BASE, ensureJwt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -71,10 +72,11 @@ const BookingModal = ({
 
     setIsSubmitting(true);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+      await ensureJwt();
       const response = await fetch(`${API_BASE}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           studioId,
           studioTitle: studio.title,

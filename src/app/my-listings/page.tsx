@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { API_BASE, ensureJwt } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +27,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 type Studio = {
   _id: string;
@@ -104,10 +103,15 @@ const MyListingsPage = () => {
     setIsDeleting(true);
     const deletedTitle = deleteTarget.title;
     try {
+      await ensureJwt();
       const response = await fetch(`${API_BASE}/all-studio/${deleteTarget._id}`, {
         method: "DELETE",
+        credentials: "include",
       });
-      if (!response.ok) throw new Error("Studio could not be deleted.");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Studio could not be deleted.");
+      }
 
       setStudios((prev) =>
         prev.filter((studio) => studio._id !== deleteTarget._id),

@@ -11,10 +11,12 @@ import {
   LoaderCircle,
   MapPin,
   Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { API_BASE, ensureJwt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,7 +58,7 @@ type StudioForm = {
   hostEmail: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const urlPattern = /^https?:\/\/.+/i;
 
 const EditStudioContent = () => {
   const params = useParams<{ id: string }>();
@@ -80,6 +82,8 @@ const EditStudioContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [gallery, setGallery] = useState<string[]>([]);
+  const [galleryInput, setGalleryInput] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,6 +96,12 @@ const EditStudioContent = () => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.message ?? "Studio could not be loaded.");
         const studio = data.studio ?? data;
+        const imageList: string[] =
+          Array.isArray(studio.images) && studio.images.length
+            ? studio.images.filter(Boolean)
+            : [studio.imageUrl ?? studio.image ?? studio.bannerImage ?? ""].filter(
+                Boolean,
+              );
         setForm({
           title: studio.title ?? "",
           category: studio.category ?? "",
@@ -99,12 +109,13 @@ const EditStudioContent = () => {
           hourlyRate: String(studio.hourlyRate ?? studio.rate ?? ""),
           securityDeposit: String(studio.securityDeposit ?? studio.deposit ?? ""),
           capacity: String(studio.capacity ?? studio.maxCapacity ?? ""),
-          imageUrl: studio.imageUrl ?? studio.image ?? studio.bannerImage ?? "",
+          imageUrl: imageList[0] ?? "",
           overview: studio.overview ?? studio.description ?? "",
           amenities: Array.isArray(studio.amenities) ? studio.amenities.join(", ") : "",
           hostName: studio.hostName || studio.host?.name || user?.name || "SpotLight Host",
           hostEmail: studio.hostEmail || studio.host?.email || user?.email || "",
         });
+        setGallery(imageList.slice(1));
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -131,8 +142,14 @@ const EditStudioContent = () => {
     const formData = new FormData();
     formData.append("image", file);
 
-    const apiKey =
-      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "ca7705d5cd180ba7cfca2b3ef496b6e6";
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+    if (!apiKey) {
+      setIsUploadingImage(false);
+      toast.error(
+        "ImgBB API key is missing. Add NEXT_PUBLIC_IMGBB_API_KEY to your .env file.",
+      );
+      return;
+    }
 
     try {
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
@@ -147,22 +164,97 @@ const EditStudioContent = () => {
       } else {
         throw new Error(data?.error?.message ?? "ImgBB upload failed.");
       }
-    } catch (error) {
+    } catch {
       toast.error("Could not upload to ImgBB. You can paste an image URL directly.");
     } finally {
       setIsUploadingImage(false);
     }
   };
 
+  const handleGalleryUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (!files.length) return;
+
+    if (files.some((file) => file.size > 10 * 1024 * 1024)) {
+      toast.error("Each gallery image must be smaller than 10MB.");
+      return;
+    }
+
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+    if (!apiKey) {
+      toast.error(
+        "ImgBB API key is missing. Add NEXT_PUBLIC_IMGBB_API_KEY to your .env file.",
+      );
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append("image", file);
+
+          const response = await fetch(
+            `https://api.imgbb.com/1/upload?key=${apiKey}`,
+            { method: "POST", body: formData },
+          );
+          const data = await response.json();
+
+          if (!data?.data?.url) {
+            throw new Error(data?.error?.message ?? "Upload failed.");
+          }
+          return data.data.url as string;
+        }),
+      );
+
+      setGallery((previous) => [...previous, ...uploaded]);
+      toast.success(
+        `${uploaded.length} gallery image${uploaded.length > 1 ? "s" : ""} uploaded.`,
+      );
+    } catch {
+      toast.error("Could not upload every image. Try again or paste image URLs.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const addGalleryUrl = () => {
+    const url = galleryInput.trim();
+    if (!url) return;
+    if (!urlPattern.test(url)) {
+      toast.error("Gallery URLs must start with http:// or https://.");
+      return;
+    }
+    setGallery((previous) =>
+      previous.includes(url) ? previous : [...previous, url],
+    );
+    setGalleryInput("");
+  };
+
+  const removeGalleryImage = (url: string) => {
+    setGallery((previous) => previous.filter((item) => item !== url));
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
+      await ensureJwt();
+      const imageList = Array.from(
+        new Set([form.imageUrl.trim(), ...gallery].filter(Boolean)),
+      );
       const response = await fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...form,
+          imageUrl: imageList[0] ?? "",
+          images: imageList,
           hourlyRate: Number(form.hourlyRate),
           securityDeposit: Number(form.securityDeposit),
           capacity: Number(form.capacity),
@@ -388,6 +480,79 @@ const EditStudioContent = () => {
                     />
                   </div>
                 )}
+
+                <div className="mt-4 rounded-xl border border-dashed border-border p-4 dark:border-zinc-800">
+                  <p className="text-sm font-medium">Gallery images</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Optional extra photos shown in the details-page carousel.
+                  </p>
+
+                  <label
+                    htmlFor="edit-gallery-file"
+                    className="mt-3 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground transition hover:bg-muted dark:border-zinc-800"
+                  >
+                    <ImageIcon className="size-4 text-primary" />
+                    Upload gallery images
+                    <input
+                      id="edit-gallery-file"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={isUploadingImage || isSubmitting}
+                      onChange={handleGalleryUpload}
+                    />
+                  </label>
+
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={galleryInput}
+                      onChange={(event) => setGalleryInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addGalleryUrl();
+                        }
+                      }}
+                      placeholder="Or paste a gallery image URL"
+                      disabled={isSubmitting || isUploadingImage}
+                      className="mt-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addGalleryUrl}
+                      disabled={isSubmitting || isUploadingImage}
+                    >
+                      Add image
+                    </Button>
+                  </div>
+
+                  {gallery.length > 0 && (
+                    <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {gallery.map((url) => (
+                        <li
+                          key={url}
+                          className="relative h-24 overflow-hidden rounded-lg border border-border dark:border-zinc-800"
+                        >
+                          <img
+                            src={url}
+                            alt="Gallery preview"
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(url)}
+                            aria-label="Remove gallery image"
+                            className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-destructive"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               <div>

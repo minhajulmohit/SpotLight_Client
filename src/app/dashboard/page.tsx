@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowRight,
   Calendar,
   Clock,
   Compass,
-  LayoutDashboard,
   LoaderCircle,
   Plus,
   ShieldCheck,
@@ -18,12 +16,10 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { API_BASE, ensureJwt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 export default function DashboardPage() {
-  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
@@ -35,34 +31,44 @@ export default function DashboardPage() {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
-    if (!isPending && user?.email) {
+    if (!isPending) {
+      if (user?.email) {
+        ensureJwt()
+          .then(() =>
+            Promise.all([
+              fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
+                .then((r) => r.json())
+                .catch(() => []),
+              fetch(
+                `${API_BASE}/bookings?email=${encodeURIComponent(user.email)}`,
+                { credentials: "include", cache: "no-store" },
+              )
+                .then((r) => r.json())
+                .catch(() => []),
+            ]),
+          )
+          .then(([studiosData, bookingsData]) => {
+          const allStudios = Array.isArray(studiosData) ? studiosData : studiosData.studios ?? [];
+          const userStudios = allStudios.filter(
+            (s: { hostEmail?: string; ownerEmail?: string }) =>
+              s.hostEmail?.toLowerCase() === user.email?.toLowerCase() ||
+              s.ownerEmail?.toLowerCase() === user.email?.toLowerCase()
+          );
+          const allBookings = Array.isArray(bookingsData) ? bookingsData : [];
+          const pendingBookings = allBookings.filter(
+            (b: { status?: string }) => b.status === "Pending"
+          );
 
-      Promise.all([
-        fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
-          .then((r) => r.json())
-          .catch(() => []),
-        fetch(`${API_BASE}/bookings?email=${encodeURIComponent(user.email)}`, { cache: "no-store" })
-          .then((r) => r.json())
-          .catch(() => []),
-      ]).then(([studiosData, bookingsData]) => {
-        const allStudios = Array.isArray(studiosData) ? studiosData : studiosData.studios ?? [];
-        const userStudios = allStudios.filter(
-          (s: { hostEmail?: string; ownerEmail?: string }) =>
-            s.hostEmail?.toLowerCase() === user.email?.toLowerCase() ||
-            s.ownerEmail?.toLowerCase() === user.email?.toLowerCase()
-        );
-        const allBookings = Array.isArray(bookingsData) ? bookingsData : [];
-        const pendingBookings = allBookings.filter(
-          (b: { status?: string }) => b.status === "Pending"
-        );
-
-        setStats({
-          myStudiosCount: userStudios.length,
-          myBookingsCount: allBookings.length,
-          pendingBookingsCount: pendingBookings.length,
+          setStats({
+            myStudiosCount: userStudios.length,
+            myBookingsCount: allBookings.length,
+            pendingBookingsCount: pendingBookings.length,
+          });
+          setIsLoadingStats(false);
         });
+      } else {
         setIsLoadingStats(false);
-      });
+      }
     }
   }, [user?.email, isPending]);
 

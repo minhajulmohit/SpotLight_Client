@@ -22,7 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/toast";
+import { toast } from "sonner";
 
 type FormValues = {
   email: string;
@@ -135,17 +135,13 @@ const LoginContent = () => {
             : error.message || "Could not log you in. Please try again.";
 
         setFormError(message);
-        toast.add({
-          type: "error",
-          title: "Login failed",
+        toast.error("Login failed", {
           description: message,
         });
         return;
       }
 
-      toast.add({
-        type: "success",
-        title: "Welcome back",
+      toast.success("Welcome back", {
         description: "You are logged in to SpotLight.",
       });
 
@@ -155,9 +151,7 @@ const LoginContent = () => {
       const message =
         "Something went wrong. Check your connection and try again.";
       setFormError(message);
-      toast.add({
-        type: "error",
-        title: "Login failed",
+      toast.error("Login failed", {
         description: message,
       });
     } finally {
@@ -181,9 +175,7 @@ const LoginContent = () => {
           : error.message || "Could not start Google login. Please try again.";
 
         setFormError(message);
-        toast.add({
-          type: "error",
-          title: "Google login failed",
+        toast.error("Google login failed", {
           description: message,
         });
       }
@@ -191,9 +183,7 @@ const LoginContent = () => {
       const message =
         "Could not start Google login. Please check your connection and try again.";
       setFormError(message);
-      toast.add({
-        type: "error",
-        title: "Google login failed",
+      toast.error("Google login failed", {
         description: message,
       });
     } finally {
@@ -320,9 +310,7 @@ const LoginContent = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    toast.add({
-                      type: "info",
-                      title: "Notice",
+                    toast.info("Notice", {
                       description: "Password reset is disabled for examiner evaluation.",
                     })
                   }

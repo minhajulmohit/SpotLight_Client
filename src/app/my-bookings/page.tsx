@@ -11,15 +11,13 @@ import {
   Download,
   LoaderCircle,
   Printer,
-  Sparkles,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { API_BASE, ensureJwt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +75,11 @@ const MyBookingsPage = () => {
   const fetchBookings = async (email: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/bookings?email=${encodeURIComponent(email)}`);
+      await ensureJwt();
+      const response = await fetch(
+        `${API_BASE}/bookings?email=${encodeURIComponent(email)}`,
+        { credentials: "include", cache: "no-store" },
+      );
       const data = await response.json();
       if (!response.ok) throw new Error(data.message ?? "Failed to load bookings.");
       setBookings(Array.isArray(data) ? data : []);
@@ -104,9 +106,11 @@ const MyBookingsPage = () => {
     setCancellingId(bookingId);
 
     try {
+      await ensureJwt();
       const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
       const data = await response.json();
 
