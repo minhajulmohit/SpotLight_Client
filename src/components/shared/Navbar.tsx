@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
@@ -34,7 +34,7 @@ const profileLinks = [
   { href: "/my-bookings", label: "My Bookings", icon: CalendarDays },
 ];
 
-const Navbar = () => {
+const NavbarContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const pathname = usePathname();
@@ -255,6 +255,18 @@ const Navbar = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const Navbar = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-16 w-full border-b border-border bg-background/90" />
+      }
+    >
+      <NavbarContent />
+    </Suspense>
   );
 };
 

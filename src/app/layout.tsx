@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Oswald, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
@@ -36,7 +37,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         className={`${oswald.variable} ${inter.variable} min-h-screen antialiased font-sans flex flex-col`}
       >
         <ThemeProvider>
-          <Navbar />
+          <Suspense
+            fallback={
+              <div className="h-16 w-full border-b border-border bg-background" />
+            }
+          >
+            <Navbar />
+          </Suspense>
 
           <main className="flex-1">{children}</main>
           <Footer />

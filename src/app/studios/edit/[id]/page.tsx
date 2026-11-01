@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -56,7 +56,7 @@ type StudioForm = {
   hostEmail: string;
 };
 
-const EditStudioPage = () => {
+const EditStudioContent = () => {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session, isPending: isAuthPending } = authClient.useSession();
@@ -477,5 +477,17 @@ const EditStudioPage = () => {
     </div>
   );
 };
+
+const EditStudioPage = () => (
+  <Suspense
+    fallback={
+      <div className="container mx-auto px-4 py-20 text-center">
+        Loading editor...
+      </div>
+    }
+  >
+    <EditStudioContent />
+  </Suspense>
+);
 
 export default EditStudioPage;
