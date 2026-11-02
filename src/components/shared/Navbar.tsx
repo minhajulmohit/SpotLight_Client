@@ -18,14 +18,13 @@ import {
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { authClient } from "@/lib/auth-client";
-import { logoutJwt } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/studios", label: "Explore Studios" },
-  { href: "/#how-it-works", label: "How it Works" },
-  { href: "/#about-us", label: "About Us" },
+  { href: "/how-it-works", label: "How it Works" },
+  { href: "/about-us", label: "About Us" },
 ];
 
 const profileLinks = [
@@ -44,8 +43,6 @@ const NavbarContent = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
-  // The profile dropdown opens on click, so close it when the user clicks
-  // elsewhere or presses Escape.
   useEffect(() => {
     if (!isProfileOpen) return;
 
@@ -83,7 +80,6 @@ const NavbarContent = () => {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
-      await logoutJwt();
     } finally {
       closeMenus();
       router.push("/");
@@ -95,6 +91,7 @@ const NavbarContent = () => {
     if (href === "/") return pathname === "/";
     if (href === "/studios") return pathname.startsWith("/studios");
     if (href === "/#about-us" || href === "/about-us") return pathname === "/about-us";
+    if (href === "/#how-it-works" || href === "/how-it-works") return pathname === "/how-it-works";
     return pathname === href;
   };
 

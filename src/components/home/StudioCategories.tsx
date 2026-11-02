@@ -60,7 +60,7 @@ const StudioCategories = () => (
             className="group relative min-h-64 overflow-hidden rounded-2xl bg-zinc-900 shadow-sm"
           >
             <div className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105" style={{ backgroundImage: `url("${image}")` }} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/35 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-white">
               <div className="flex items-end justify-between gap-4">
                 <div>

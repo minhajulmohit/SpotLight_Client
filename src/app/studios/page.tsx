@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { startTransition, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Filter, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 
@@ -8,6 +8,7 @@ import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
 import { Button } from "@/components/ui/button";
+import { API_BASE } from "@/lib/api";
 
 const DEFAULT_CATEGORIES = [
   "Photo Studio",
@@ -52,8 +53,6 @@ const categoriesMatch = (studioCategory: string, selectedCategory: string) => {
   );
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 const StudiosContent = () => {
   const searchParams = useSearchParams();
   const [studios, setStudios] = useState<StudioCardData[]>([]);
@@ -69,11 +68,13 @@ const StudiosContent = () => {
 
   // Sync state when URL search params change (e.g. clicking category link from Home)
   useEffect(() => {
-    setCategory(searchParams.get("category") ?? "");
-    setSearch(searchParams.get("search") ?? "");
-    setLocation(searchParams.get("location") ?? "");
-    setMaxRate(searchParams.get("maxRate") ?? "");
-    setMinRating(searchParams.get("rating") ?? "");
+    startTransition(() => {
+      setCategory(searchParams.get("category") ?? "");
+      setSearch(searchParams.get("search") ?? "");
+      setLocation(searchParams.get("location") ?? "");
+      setMaxRate(searchParams.get("maxRate") ?? "");
+      setMinRating(searchParams.get("rating") ?? "");
+    });
   }, [searchParams]);
 
   useEffect(() => {

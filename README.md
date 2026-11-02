@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Project Overview
-**SpotLight** is a high-performance peer-to-peer marketplace designed for creators, filmmakers, photographers, podcasters, and musicians. Studio owners and hosts can list their creative spaces—ranging from photography cyc walls and cinema sound stages to podcast lounges, music recording suites, and art workshops. Fellow creators can discover, filter, inspect dynamic availability, and reserve studio slots with transparent pricing and real-time booking management.
+**SpotLight** is a high-performance peer-to-peer marketplace designed for creators, filmmakers, photographers, poetasters, and musicians. Studio owners and hosts can list their creative spaces—ranging from photography cyc walls and cinema sound stages to podcast lounges, music recording suites, and art workshops. Fellow creators can discover, filter, inspect dynamic availability, and reserve studio slots with transparent pricing and real-time booking management.
 
 ---
 
@@ -14,11 +14,10 @@
 
 * **Dynamic Studio Discovery & Filtering:** Browse production-ready spaces with real-time multi-criteria filtering by category (Photo Studio, Sound Stage, Podcast Lounge, Music Suite, Art Workshop), maximum hourly rate, minimum rating, and text search with instant URL query param synchronization.
 * **Complete Studio Management (CRUD):** Authenticated hosts can list new creative studios with ImgBB image uploading (banner + multi-image gallery carousel), manage their own listings via `/my-listings`, update workspace specs, and delete with interactive confirmation modals.
-* **JWT-Protected Mutations (Challenge 1):** Every create/update/delete request is guarded by a JWT stored in an HTTPOnly cookie. Unauthenticated or expired requests receive `401 Unauthorized`, and non-owners receive `403 Forbidden`.
+* **JWT-Protected Mutations (Challenge 1):** Better Auth's JWT plugin issues a signed **EdDSA** token from the active session, and every protected Express request carries it as `Authorization: Bearer <jwt>`. The API verifies the signature against Better Auth's JWKS endpoint. Missing or invalid tokens receive `401 Unauthorized`, and non-owners receive `403 Forbidden`.
 * **Conflict-Free Booking System with Double-Booking Prevention:** Interactive booking modal with automatic hour and price calculation. Backend algorithm prevents overlapping reservations on identical time slots (returning HTTP 409 conflict).
 * **Host Guarantee & Creator Support (Platform Assurances):** Integrated trust framework covering $1M liability protection, verified creator/host profiles, equipment safety protocols, and 24/7 dedicated support.
 * **Downloadable PDF Booking Invoices:** Official receipts generated client-side with **jsPDF** — studio/host breakdown, schedule, hourly rate math, deposit and total — downloaded as `spotlight-invoice-<id>.pdf` without opening the browser print dialog.
-* **MongoDB-Backed Wishlist:** Signed-in creators can heart any studio and keep it saved across browsers and devices. Saves live in a `wishlists` collection behind JWT-protected API routes (no more localStorage-only favourites).
 * **Comprehensive Light / Dark Theme Customization:** Instant toggle between light and dark modes with persisted user preference across all components, forms, and dialogs.
 * **Custom Creative 404 Experience:** Branded "Scene Not Found" error page with creative spotlight illustration and instant navigation back to the workspace catalog.
 
@@ -27,7 +26,7 @@
 ## 🛠️ Tech Stack
 
 * **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Swiper 14 (hero slider), jsPDF (invoice export), Lucide React, Sonner Toast
-* **Authentication:** BetterAuth with MongoDB Adapter, persistent session storage, Google OAuth support, JWT authorization for the Express API
+* **Authentication:** BetterAuth with MongoDB Adapter, persistent session storage, Google OAuth support, JWT plugin (EdDSA tokens verified by the Express API through JWKS)
 * **Backend:** Node.js, Express.js, MongoDB Atlas (Native Driver), CORS, dotenv
 * **Media Storage:** ImgBB Cloud API integration for direct photo uploads
 
@@ -69,8 +68,8 @@ Create a `.env` file in `spotlight_server/`:
 MONGODB_URI=your_mongodb_connection_string
 PORT=8000
 CLIENT_URL=http://localhost:3000
-JWT_SECRET=your_jwt_secret
 ```
+> `CLIENT_URL` must exactly match the client's `BETTER_AUTH_URL`; Express uses it for CORS and to verify the JWT issuer/audience. Browser API requests go through the same-origin Next.js proxy, which reads `NEXT_PUBLIC_API_URL` server-side and forwards the JWT without exposing it to browser JavaScript.
 
 ### 4. Run Development Servers
 ```bash

@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { StripEmptyObjects } from "better-auth";
 
 const STUDIO_API_ENDPOINT = `${API_BASE}/add-new-studio`;
 
@@ -127,11 +128,11 @@ const AddStudioForm = () => {
     );
   };
 
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
 
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size should be less than 10MB.");
@@ -152,10 +153,13 @@ const AddStudioForm = () => {
     }
 
     try {
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${apiKey}`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
       const data = await response.json();
 
       if (data?.data?.url) {
@@ -216,7 +220,9 @@ const AddStudioForm = () => {
         `${uploaded.length} gallery image${uploaded.length > 1 ? "s" : ""} uploaded.`,
       );
     } catch {
-      toast.error("Could not upload every image. Try again or paste image URLs.");
+      toast.error(
+        "Could not upload every image. Try again or paste image URLs.",
+      );
     } finally {
       setIsUploadingImage(false);
     }
@@ -326,11 +332,9 @@ const AddStudioForm = () => {
     setIsSubmitting(true);
 
     try {
-      await ensureJwt();
       const response = await fetch(STUDIO_API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -367,7 +371,9 @@ const AddStudioForm = () => {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
           <AlertCircle className="size-7" />
         </div>
-        <h2 className="mt-4 font-heading text-2xl font-bold">Sign In Required</h2>
+        <h2 className="mt-4 font-heading text-2xl font-bold">
+          Sign In Required
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Please log in to your account before hosting a new creative space.
         </p>
@@ -392,7 +398,8 @@ const AddStudioForm = () => {
           List Your Creative Studio
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Fill in the specifications of your workspace to share it with filmmakers, photographers, and audio producers.
+          Fill in the specifications of your workspace to share it with
+          filmmakers, photographers, and audio producers.
         </p>
       </div>
 
@@ -400,7 +407,8 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Studio Basics</CardTitle>
           <CardDescription>
-            Give your space a clear title and assign its primary production category.
+            Give your space a clear title and assign its primary production
+            category.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -451,7 +459,8 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Pricing &amp; Capacity</CardTitle>
           <CardDescription>
-            Set your transparent hourly rate, security deposit, and set capacity.
+            Set your transparent hourly rate, security deposit, and set
+            capacity.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -530,7 +539,8 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Location &amp; Image Upload</CardTitle>
           <CardDescription>
-            Provide your address and upload a studio banner via ImgBB or paste a direct image URL.
+            Provide your address and upload a studio banner via ImgBB or paste a
+            direct image URL.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -712,10 +722,11 @@ const AddStudioForm = () => {
                 <label
                   key={amenity.value}
                   htmlFor={`amenity-${amenity.value}`}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors duration-200 ${isSelected
-                    ? "border-primary/50 bg-primary/10 text-foreground"
-                    : "border-border text-muted-foreground hover:bg-muted dark:border-zinc-800 dark:hover:bg-zinc-800/60"
-                    }`}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors duration-200 ${
+                    isSelected
+                      ? "border-primary/50 bg-primary/10 text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted dark:border-zinc-800 dark:hover:bg-zinc-800/60"
+                  }`}
                 >
                   <Checkbox
                     id={`amenity-${amenity.value}`}
@@ -737,7 +748,8 @@ const AddStudioForm = () => {
         <CardHeader>
           <CardTitle>Detailed Overview</CardTitle>
           <CardDescription>
-            Describe the floor layout, lighting setups, ceiling height, and sound isolation.
+            Describe the floor layout, lighting setups, ceiling height, and
+            sound isolation.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -804,7 +816,11 @@ const AddStudioForm = () => {
         >
           Cancel
         </Button>
-        <Button type="submit" size="lg" disabled={isSubmitting || isUploadingImage}>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting || isUploadingImage}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />

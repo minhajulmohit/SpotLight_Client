@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -103,10 +103,8 @@ const MyListingsPage = () => {
     setIsDeleting(true);
     const deletedTitle = deleteTarget.title;
     try {
-      await ensureJwt();
       const response = await fetch(`${API_BASE}/all-studio/${deleteTarget._id}`, {
         method: "DELETE",
-        credentials: "include",
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

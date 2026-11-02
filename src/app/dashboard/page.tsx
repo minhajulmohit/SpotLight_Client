@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
@@ -33,21 +33,18 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isPending) {
       if (user?.email) {
-        ensureJwt()
-          .then(() =>
-            Promise.all([
-              fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
-                .then((r) => r.json())
-                .catch(() => []),
-              fetch(
-                `${API_BASE}/bookings?email=${encodeURIComponent(user.email)}`,
-                { credentials: "include", cache: "no-store" },
-              )
-                .then((r) => r.json())
-                .catch(() => []),
-            ]),
-          )
-          .then(([studiosData, bookingsData]) => {
+        Promise.all([
+          fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
+            .then((r) => r.json())
+            .catch(() => []),
+          fetch(`${API_BASE}/bookings`, { cache: "no-store" })
+            .then((r) => r.json())
+            .catch(() => []),
+          fetch(`${API_BASE}/bookings?hostEmail=true`, { cache: "no-store" })
+            .then((r) => r.json())
+            .catch(() => []),
+        ])
+          .then(([studiosData, bookingsData, hostBookingsData]) => {
           const allStudios = Array.isArray(studiosData) ? studiosData : studiosData.studios ?? [];
           const userStudios = allStudios.filter(
             (s: { hostEmail?: string; ownerEmail?: string }) =>
@@ -55,7 +52,8 @@ export default function DashboardPage() {
               s.ownerEmail?.toLowerCase() === user.email?.toLowerCase()
           );
           const allBookings = Array.isArray(bookingsData) ? bookingsData : [];
-          const pendingBookings = allBookings.filter(
+          const hostBookings = Array.isArray(hostBookingsData) ? hostBookingsData : [];
+          const pendingBookings = hostBookings.filter(
             (b: { status?: string }) => b.status === "Pending"
           );
 
@@ -66,8 +64,6 @@ export default function DashboardPage() {
           });
           setIsLoadingStats(false);
         });
-      } else {
-        setIsLoadingStats(false);
       }
     }
   }, [user?.email, isPending]);
@@ -289,4 +285,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

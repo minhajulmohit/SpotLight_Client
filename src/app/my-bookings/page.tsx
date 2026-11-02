@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AlertCircle,
   Calendar,
+  CheckCircle2,
   Clock,
   DollarSign,
   Download,
@@ -15,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -251,6 +252,34 @@ const getStatusBadge = (status: Booking["status"]) => {
   }
 };
 
+const fetchBookings = async () => {
+  const [guestResponse, hostResponse] = await Promise.all([
+    fetch(`${API_BASE}/bookings`, { cache: "no-store" }),
+    fetch(`${API_BASE}/bookings?hostEmail=true`, { cache: "no-store" }),
+  ]);
+  const [guestData, hostData] = await Promise.all([
+    guestResponse.json(),
+    hostResponse.json(),
+  ]);
+
+  if (!guestResponse.ok || !hostResponse.ok) {
+    throw new Error("Failed to load bookings.");
+  }
+
+  const uniqueBookings = new Map<string, Booking>();
+  for (const booking of [
+    ...(Array.isArray(guestData) ? guestData : []),
+    ...(Array.isArray(hostData) ? hostData : []),
+  ]) {
+    uniqueBookings.set(booking._id, booking);
+  }
+  return [...uniqueBookings.values()].sort(
+    (first, second) =>
+      new Date(second.createdAt ?? 0).getTime() -
+      new Date(first.createdAt ?? 0).getTime(),
+  );
+};
+
 const MyBookingsPage = () => {
   const { data: session, isPending: isAuthPending } = authClient.useSession();
   const user = session?.user;
@@ -258,35 +287,44 @@ const MyBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<Booking | null>(null);
   const [selectedBookingForInvoice, setSelectedBookingForInvoice] = useState<Booking | null>(null);
 
-  const fetchBookings = async (email: string) => {
+  const refreshBookings = () => {
     setIsLoading(true);
-    try {
-      await ensureJwt();
-      const response = await fetch(
-        `${API_BASE}/bookings?email=${encodeURIComponent(email)}`,
-        { credentials: "include", cache: "no-store" },
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message ?? "Failed to load bookings.");
-      setBookings(Array.isArray(data) ? data : []);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not load bookings.");
-    } finally {
-      setIsLoading(false);
-    }
+    fetchBookings()
+      .then(setBookings)
+      .catch((error: unknown) =>
+        toast.error(
+          error instanceof Error ? error.message : "Could not load bookings.",
+        ),
+      )
+      .finally(() => setIsLoading(false));
   };
 
   useEffect(() => {
-    if (!isAuthPending) {
-      if (user?.email) {
-        fetchBookings(user.email);
-      } else {
-        setIsLoading(false);
-      }
-    }
+    if (isAuthPending || !user?.email) return;
+
+    let active = true;
+    fetchBookings()
+      .then((result) => {
+        if (active) setBookings(result);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          toast.error(
+            error instanceof Error ? error.message : "Could not load bookings.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [user?.email, isAuthPending]);
 
   const handleCancelBooking = async () => {
@@ -295,13 +333,11 @@ const MyBookingsPage = () => {
     setCancellingId(bookingId);
 
     try {
-      await ensureJwt();
       const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message ?? "Could not cancel booking.");
@@ -317,6 +353,37 @@ const MyBookingsPage = () => {
       toast.error(error instanceof Error ? error.message : "Failed to cancel booking.");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleHostStatusChange = async (
+    booking: Booking,
+    status: "Confirmed" | "Completed",
+  ) => {
+    setConfirmingId(booking._id);
+    try {
+      const response = await fetch(
+        `${API_BASE}/bookings/${booking._id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        },
+      );
+      if (!response.ok) throw new Error("Could not update this booking.");
+
+      setBookings((previous) =>
+        previous.map((item) =>
+          item._id === booking._id ? { ...item, status } : item,
+        ),
+      );
+      toast.success(`Booking ${status.toLowerCase()}.`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not update this booking.",
+      );
+    } finally {
+      setConfirmingId(null);
     }
   };
 
@@ -419,7 +486,7 @@ const MyBookingsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => user?.email && fetchBookings(user.email)}
+                onClick={refreshBookings}
               >
                 Refresh
               </Button>
@@ -466,6 +533,33 @@ const MyBookingsPage = () => {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
+                    {["Pending", "Confirmed"].includes(booking.status) &&
+                      String(booking.hostEmail ?? "").trim().toLowerCase() ===
+                        user.email?.trim().toLowerCase() && (
+                        <Button
+                          size="sm"
+                          disabled={confirmingId === booking._id}
+                          onClick={() =>
+                            handleHostStatusChange(
+                              booking,
+                              booking.status === "Pending"
+                                ? "Confirmed"
+                                : "Completed",
+                            )
+                          }
+                          className="gap-1.5"
+                        >
+                          {confirmingId === booking._id ? (
+                            <LoaderCircle className="size-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="size-3.5" />
+                          )}
+                          {booking.status === "Pending"
+                            ? "Confirm"
+                            : "Mark Completed"}
+                        </Button>
+                      )}
+
                     {/* Invoice Download / View Button */}
                     <Button
                       variant="outline"

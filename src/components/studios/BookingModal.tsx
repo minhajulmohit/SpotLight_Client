@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import type { StudioDetails } from "@/app/studios/[id]/page";
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,9 +26,25 @@ type BookingModalProps = {
   securityDeposit: number;
 };
 
+type BookedTime = {
+  startTime: string;
+  endTime: string;
+};
+
+type Availability = {
+  key: string;
+  bookedTimes: BookedTime[];
+  error?: string;
+};
+
 const toLocalDate = (date: Date) => {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+};
+
+const toMinutes = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
 };
 
 const BookingModal = ({
@@ -43,6 +59,10 @@ const BookingModal = ({
   const [bookingDate, setBookingDate] = useState(() => toLocalDate(new Date()));
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
+  const [availability, setAvailability] = useState<Availability>({
+    key: "",
+    bookedTimes: [],
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hours = useMemo(() => {
@@ -58,6 +78,46 @@ const BookingModal = ({
   const studioId = studio._id ?? studio.id ?? "";
   const hostName = studio.host?.name ?? studio.hostName ?? "Studio Host";
   const hostEmail = studio.host?.email ?? studio.hostEmail ?? "";
+  const availabilityKey = `${studioId}:${bookingDate}`;
+  const isLoadingAvailability = availability.key !== availabilityKey;
+  const bookedTimes =
+    availability.key === availabilityKey ? availability.bookedTimes : [];
+  const availabilityError =
+    availability.key === availabilityKey ? availability.error : undefined;
+  const selectedTimeIsBooked = bookedTimes.some(
+    ({ startTime: bookedStart, endTime: bookedEnd }) =>
+      toMinutes(startTime) < toMinutes(bookedEnd) &&
+      toMinutes(endTime) > toMinutes(bookedStart),
+  );
+
+  useEffect(() => {
+    if (!open || !studioId || !bookingDate) return;
+    const controller = new AbortController();
+
+    fetch(
+      `${API_BASE}/availability?studioId=${encodeURIComponent(studioId)}&bookingDate=${encodeURIComponent(bookingDate)}`,
+      { signal: controller.signal, cache: "no-store" },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not check studio availability.");
+        const data = (await response.json()) as BookedTime[];
+        setAvailability({
+          key: availabilityKey,
+          bookedTimes: Array.isArray(data) ? data : [],
+        });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Could not check studio availability.";
+        setAvailability({ key: availabilityKey, bookedTimes: [], error: message });
+        toast.error(message);
+      });
+
+    return () => controller.abort();
+  }, [availabilityKey, bookingDate, open, studioId]);
 
   const submitBooking = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,11 +132,9 @@ const BookingModal = ({
 
     setIsSubmitting(true);
     try {
-      await ensureJwt();
       const response = await fetch(`${API_BASE}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           studioId,
           studioTitle: studio.title,
@@ -148,6 +206,29 @@ const BookingModal = ({
               <input required type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 dark:border-zinc-800 dark:bg-zinc-900" />
             </label>
           </div>
+          <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm dark:border-zinc-800">
+            {isLoadingAvailability ? (
+              <p className="text-muted-foreground">Checking availability...</p>
+            ) : availabilityError ? (
+              <p className="text-destructive">{availabilityError}</p>
+            ) : bookedTimes.length ? (
+              <>
+                <p className="font-medium">Already booked on this date</p>
+                <p className="mt-1 text-muted-foreground">
+                  {bookedTimes
+                    .map(({ startTime: start, endTime: end }) => `${start}–${end}`)
+                    .join(", ")}
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">No bookings yet for this date.</p>
+            )}
+          </div>
+          {selectedTimeIsBooked && (
+            <p className="text-sm text-destructive">
+              This time overlaps an existing booking. Choose another time.
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-muted/40 p-4 dark:border-zinc-800">
             <div>
@@ -162,7 +243,7 @@ const BookingModal = ({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || hours <= 0} className="bg-amber-400 text-zinc-950 hover:bg-amber-300 dark:text-zinc-950">
+            <Button type="submit" disabled={isSubmitting || isLoadingAvailability || hours <= 0 || selectedTimeIsBooked} className="bg-amber-400 text-zinc-950 hover:bg-amber-300 dark:text-zinc-950">
               {isSubmitting && <LoaderCircle className="animate-spin" />}
               Submit Booking Request
             </Button>

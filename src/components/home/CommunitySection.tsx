@@ -22,7 +22,7 @@ const CommunitySection = () => (
         </div>
 
         <div className="relative flex min-h-96 items-end overflow-hidden bg-[url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center p-8 text-white sm:p-12">
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/45 to-transparent" />
           <div className="relative max-w-md">
             <Building2 className="size-7 text-amber-400" />
             <h2 className="mt-5 font-heading text-3xl font-bold sm:text-4xl">Have a space worth sharing?</h2>

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import BookingModal from "@/components/studios/BookingModal";
 import { Button } from "@/components/ui/button";
+import { API_BASE } from "@/lib/api";
 
 export type StudioDetails = {
   _id?: string;
@@ -62,12 +63,10 @@ export type StudioDetails = {
 const unwrapStudio = (data: StudioDetails | { studio?: StudioDetails }) =>
   "studio" in data && data.studio ? data.studio : (data as StudioDetails);
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 const StudioDetailsSkeleton = () => (
   <div className="container mx-auto max-w-6xl px-4 py-10">
     <div className="animate-pulse">
-      <div className="aspect-[16/8] rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="aspect-16/8 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-6">
           <div className="h-10 w-2/3 rounded bg-zinc-200 dark:bg-zinc-800" />
@@ -161,7 +160,7 @@ const StudioDetailsContent = () => {
   return (
     <div className="bg-background pb-20">
       <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
-        <div className="group relative aspect-[16/8] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900">
+        <div className="group relative aspect-16/8 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900">
           <Image
             key={images[selectedImage]}
             src={images[selectedImage]}
@@ -172,7 +171,7 @@ const StudioDetailsContent = () => {
             priority
             unoptimized={images[selectedImage].startsWith("http")}
           />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-black/50 to-transparent" />
           {images.length > 1 && (
             <>
               <button

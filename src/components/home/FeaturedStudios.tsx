@@ -7,8 +7,7 @@ import { ArrowRight } from "lucide-react";
 import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_BASE } from "@/lib/api";
 
 const FeaturedStudios = () => {
   const [studios, setStudios] = useState<StudioCardData[]>([]);
@@ -53,7 +52,7 @@ const FeaturedStudios = () => {
         <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-3 text-xs font-semibold tracking-[0.22em] text-primary uppercase">
-              Creator favourites
+              Featured spaces
             </p>
             <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
               Featured creative spaces

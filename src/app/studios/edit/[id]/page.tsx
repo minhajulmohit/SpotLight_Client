@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE, ensureJwt } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -243,14 +243,12 @@ const EditStudioContent = () => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await ensureJwt();
       const imageList = Array.from(
         new Set([form.imageUrl.trim(), ...gallery].filter(Boolean)),
       );
       const response = await fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           ...form,
           imageUrl: imageList[0] ?? "",

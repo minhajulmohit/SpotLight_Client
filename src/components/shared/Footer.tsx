@@ -98,12 +98,12 @@ const quickLinks = (
       </Link>
     </li>
     <li>
-      <Link href="/#how-it-works" className={linkClass}>
+      <Link href="/how-it-works" className={linkClass}>
         How it Works
       </Link>
     </li>
     <li>
-      <Link href="/#about-us" className={linkClass}>
+      <Link href="/about-us" className={linkClass}>
         About Us
       </Link>
     </li>
@@ -150,21 +150,6 @@ const categoryLinks = (
         className={linkClass}
       >
         Art Workshops
-      </Link>
-    </li>
-  </>
-);
-
-const legalLinks = (
-  <>
-    <li>
-      <Link href="/privacy" className={linkClass}>
-        Privacy Policy
-      </Link>
-    </li>
-    <li>
-      <Link href="/terms" className={linkClass}>
-        Terms of Service
       </Link>
     </li>
   </>
@@ -260,9 +245,9 @@ const Footer = () => {
         <div className="mt-12 flex flex-col items-center gap-5 border-t border-border pt-6 transition-colors duration-200 dark:border-zinc-800 sm:flex-row sm:justify-between">
           <ul className="flex gap-2">{socialLinks}</ul>
           <p className="text-sm text-muted-foreground transition-colors duration-200 dark:text-zinc-500">
-            &copy; 2026 Spotlight. All rights reserved.
+            &copy; 2026 SpotLight. All rights reserved. Bookings follow each
+            host&apos;s listed space rules.
           </p>
-          <ul className="flex gap-4 text-sm">{legalLinks}</ul>
         </div>
       </div>
     </footer>
