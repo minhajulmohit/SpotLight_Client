@@ -131,7 +131,7 @@ const HeroSlider = () => {
         type="button"
         onClick={() => swiper?.slidePrev()}
         aria-label="Previous slide"
-        className="absolute top-1/2 left-2 z-20 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition-colors duration-200 hover:border-amber-400/60 hover:text-amber-400 sm:left-4 sm:size-10"
+        className="absolute top-1/2 left-2 z-20 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition-colors duration-200 hover:border-amber-400/60 hover:text-amber-400 lg:inline-flex"
       >
         <ArrowLeft className="size-5" />
       </button>
@@ -139,7 +139,7 @@ const HeroSlider = () => {
         type="button"
         onClick={() => swiper?.slideNext()}
         aria-label="Next slide"
-        className="absolute top-1/2 right-2 z-20 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition-colors duration-200 hover:border-amber-400/60 hover:text-amber-400 sm:right-4 sm:size-10"
+        className="absolute top-1/2 right-2 z-20 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition-colors duration-200 hover:border-amber-400/60 hover:text-amber-400 lg:inline-flex"
       >
         <ArrowRight className="size-5" />
       </button>
