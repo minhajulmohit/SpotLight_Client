@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { StripEmptyObjects } from "better-auth";
 
 const STUDIO_API_ENDPOINT = `${API_BASE}/add-new-studio`;
 
@@ -73,8 +72,6 @@ type FormState = {
   location: string;
   imageUrl: string;
   overview: string;
-  hostName: string;
-  hostEmail: string;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -88,8 +85,6 @@ const initialForm: FormState = {
   location: "",
   imageUrl: "",
   overview: "",
-  hostName: "",
-  hostEmail: "",
 };
 
 const urlPattern = /^https?:\/\/.+/i;
@@ -106,17 +101,6 @@ const AddStudioForm = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-  // Auto-populate read-only host details from logged-in session
-  useEffect(() => {
-    if (user) {
-      setForm((prev) => ({
-        ...prev,
-        hostName: user.name ?? "",
-        hostEmail: user.email ?? "",
-      }));
-    }
-  }, [user]);
 
   const update = <K extends keyof FormState>(key: K, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -325,9 +309,9 @@ const AddStudioForm = () => {
       images: imageList,
       amenities,
       overview: form.overview.trim(),
-      hostName: form.hostName || user?.name || "SpotLight Host",
-      hostEmail: form.hostEmail || user?.email || "",
-      ownerEmail: form.hostEmail || user?.email || "",
+      hostName: user?.name || "SpotLight Host",
+      hostEmail: user?.email || "",
+      ownerEmail: user?.email || "",
     };
 
     setIsSubmitting(true);
@@ -787,7 +771,7 @@ const AddStudioForm = () => {
                   id="hostName"
                   name="hostName"
                   readOnly
-                  value={form.hostName}
+                  value={user?.name ?? ""}
                   className="bg-muted text-muted-foreground cursor-not-allowed"
                 />
               </Field>
@@ -798,7 +782,7 @@ const AddStudioForm = () => {
                   id="hostEmail"
                   name="hostEmail"
                   readOnly
-                  value={form.hostEmail}
+                  value={user?.email ?? ""}
                   className="bg-muted text-muted-foreground cursor-not-allowed"
                 />
               </Field>

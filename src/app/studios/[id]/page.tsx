@@ -148,8 +148,7 @@ const StudioDetailsContent = () => {
   const hostName =
     studio.host?.name ?? studio.hostName ?? "SpotLight Studio Host";
   const hostEmail = studio.host?.email ?? studio.hostEmail;
-  const hostAvatar =
-    studio.host?.image ?? studio.host?.avatar ?? "/avatar-placeholder.png";
+  const hostInitial = hostName.trim().charAt(0).toUpperCase() || "S";
   const description =
     studio.overview ??
     studio.description ??
@@ -271,8 +270,11 @@ const StudioDetailsContent = () => {
             <section className="mt-10">
               <h2 className="font-heading text-2xl font-bold">Hosted by</h2>
               <div className="mt-4 flex items-center gap-4 rounded-xl border border-border p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-muted">
-                  <Image src={hostAvatar} alt={hostName} fill className="object-cover" unoptimized={hostAvatar.startsWith("http")} sizes="56px" />
+                <div
+                  aria-label={`${hostName} profile`}
+                  className="flex size-14 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xl font-bold text-zinc-950"
+                >
+                  {hostInitial}
                 </div>
                 <div>
                   <p className="font-semibold">{hostName}</p>

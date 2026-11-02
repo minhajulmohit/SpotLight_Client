@@ -12,7 +12,7 @@
 
 ## 🚀 Key Features
 
-* **Dynamic Studio Discovery & Filtering:** Browse production-ready spaces with real-time multi-criteria filtering by category (Photo Studio, Sound Stage, Podcast Lounge, Music Suite, Art Workshop), maximum hourly rate, minimum rating, and text search with instant URL query param synchronization.
+* **Dynamic Studio Discovery & Filtering:** Browse production-ready spaces with real-time multi-criteria filtering by category (Photo Studio, Sound Stage, Film Stage, Podcast Lounge, Music Suite, Art Workshop), maximum hourly rate, minimum rating, and text search with instant URL query param synchronization.
 * **Complete Studio Management (CRUD):** Authenticated hosts can list new creative studios with ImgBB image uploading (banner + multi-image gallery carousel), manage their own listings via `/my-listings`, update workspace specs, and delete with interactive confirmation modals.
 * **JWT-Protected Mutations (Challenge 1):** Better Auth's JWT plugin issues a signed **EdDSA** token from the active session, and every protected Express request carries it as `Authorization: Bearer <jwt>`. The API verifies the signature against Better Auth's JWKS endpoint. Missing or invalid tokens receive `401 Unauthorized`, and non-owners receive `403 Forbidden`.
 * **Conflict-Free Booking System with Double-Booking Prevention:** Interactive booking modal with automatic hour and price calculation. Backend algorithm prevents overlapping reservations on identical time slots (returning HTTP 409 conflict).

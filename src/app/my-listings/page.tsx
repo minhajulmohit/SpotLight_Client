@@ -44,6 +44,7 @@ type Studio = {
 const MyListingsPage = () => {
   const { data: session, isPending: isAuthPending } = authClient.useSession();
   const user = session?.user;
+  const userEmail = user?.email;
 
   const [studios, setStudios] = useState<Studio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,13 +84,13 @@ const MyListingsPage = () => {
 
   // Filter user-owned spaces (match hostEmail or ownerEmail)
   const myListings = useMemo(() => {
-    if (!user?.email) return [];
-    const currentEmail = user.email.trim().toLowerCase();
+    if (!userEmail) return [];
+    const currentEmail = userEmail.trim().toLowerCase();
     return studios.filter((studio) => {
       const studioEmail = (studio.hostEmail || studio.ownerEmail || "").trim().toLowerCase();
       return studioEmail === currentEmail;
     });
-  }, [studios, user?.email]);
+  }, [studios, userEmail]);
 
   const retry = () => {
     setIsLoading(true);
