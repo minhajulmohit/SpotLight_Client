@@ -42,6 +42,7 @@ const CATEGORIES = [
   "Podcast Lounge",
   "Music Suite",
   "Art Workshop",
+  "Film Stage",
 ];
 
 type StudioForm = {

@@ -13,6 +13,7 @@ import { API_BASE } from "@/lib/api";
 const DEFAULT_CATEGORIES = [
   "Photo Studio",
   "Sound Stage",
+  "Film Stage",
   "Podcast Lounge",
   "Music Suite",
   "Art Workshop",
@@ -35,12 +36,15 @@ const normalizeCategory = (value: string) => {
 };
 
 const categoriesMatch = (studioCategory: string, selectedCategory: string) => {
-  if (!selectedCategory) return true;
+  if (!selectedCategory || normalizeCategory(selectedCategory) === "all categories") {
+    return true;
+  }
   const studio = normalizeCategory(studioCategory);
   const selected = normalizeCategory(selectedCategory);
   const aliases: Record<string, string[]> = {
     "photo studio": ["photo studios", "photo", "photography studio", "photography studios"],
     "sound stage": ["film video", "sound stages", "film studio", "video studio"],
+    "film stage": ["film video", "film studio", "video studio"],
     "podcast lounge": ["podcast rooms", "podcast", "podcast studio"],
     "music suite": ["recording studios", "music suites", "recording studio", "music studio"],
     "art workshop": ["creative offices", "live events", "art workshops", "creative office"],
@@ -116,9 +120,19 @@ const StudiosContent = () => {
         }
         return cat;
       })
-      .filter(Boolean);
+      .filter(
+        (category) =>
+          category && normalizeCategory(category) !== "all categories",
+      );
 
-    return [...new Set([...DEFAULT_CATEGORIES, ...sanitized])].sort();
+    return [
+      ...new Map(
+        [...DEFAULT_CATEGORIES, ...sanitized].map((item) => [
+          normalizeCategory(item),
+          item,
+        ]),
+      ).values(),
+    ].sort();
   }, [studios]);
 
   const filteredStudios = useMemo(() => {

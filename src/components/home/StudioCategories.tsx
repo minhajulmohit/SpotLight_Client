@@ -37,6 +37,13 @@ const categories = [
     icon: Palette,
     image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
   },
+  {
+    name: "Film Stage",
+    filter: "Film Stage",
+    description: "Production-ready sets for film and video shoots.",
+    icon: Clapperboard,
+    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80",
+  },
 ];
 
 const StudioCategories = () => (
