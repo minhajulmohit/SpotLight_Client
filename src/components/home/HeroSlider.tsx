@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { A11y, Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -90,9 +91,14 @@ const HeroSlider = () => {
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={slide.id} className="h-full" aria-label={`${index + 1} of ${slides.length}`}>
-            <div
-              className="absolute inset-0 bg-zinc-900 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url('${slide.image}')` }}
+            <Image
+              src={slide.image}
+              alt=""
+              fill
+              sizes="100vw"
+              preload={index === 0}
+              loading={index === 0 ? undefined : "lazy"}
+              className="object-cover object-center"
             />
 
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/50 to-black/30" />

@@ -1,50 +1,64 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
-import { API_BASE } from "@/lib/api";
 
-const FeaturedStudios = () => {
-  const [studios, setStudios] = useState<StudioCardData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const backendUrl =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-  useEffect(() => {
-    const controller = new AbortController();
+export const FeaturedStudiosSkeleton = () => (
+  <section className="bg-background py-20 sm:py-24">
+    <div className="container mx-auto px-4">
+      <div className="mb-10 space-y-3">
+        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+        <div className="h-10 w-72 max-w-full animate-pulse rounded bg-muted" />
+        <div className="h-5 w-96 max-w-full animate-pulse rounded bg-muted" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className="overflow-hidden rounded-xl border border-border bg-card dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div className="aspect-video animate-pulse bg-muted" />
+            <div className="space-y-4 p-5">
+              <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-8 w-1/3 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
-    fetch(`${API_BASE}/featured-studio`, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data: StudioCardData[] | { studios?: StudioCardData[] }) => {
-        const studiosData = Array.isArray(data) ? data : data.studios ?? [];
-        setStudios(studiosData.slice(0, 6));
-      })
-      .catch((requestError: unknown) => {
-        if (
-          requestError instanceof DOMException &&
-          requestError.name === "AbortError"
-        ) {
-          return;
-        }
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Could not load featured studios.",
-        );
-      })
-      .finally(() => setIsLoading(false));
+const FeaturedStudios = async () => {
+  let studios: StudioCardData[] = [];
+  let error: string | null = null;
 
-    return () => controller.abort();
-  }, []);
+  try {
+    const response = await fetch(
+      new URL("/featured-studio", `${backendUrl}/`),
+      { next: { revalidate: 60 } },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as
+      | StudioCardData[]
+      | { studios?: StudioCardData[] };
+    studios = (Array.isArray(data) ? data : data.studios ?? []).slice(0, 6);
+  } catch (requestError: unknown) {
+    error =
+      requestError instanceof Error
+        ? requestError.message
+        : "Could not load featured studios.";
+  }
 
   return (
     <section className="bg-background py-20 sm:py-24">
@@ -71,38 +85,19 @@ const FeaturedStudios = () => {
           </Link>
         </div>
 
-        {isLoading && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="overflow-hidden rounded-xl border border-border bg-card dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="aspect-video animate-pulse bg-zinc-200 dark:bg-zinc-800" />
-                <div className="space-y-4 p-5">
-                  <div className="h-5 w-3/4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="h-8 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="h-9 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {error && !isLoading && (
+        {error && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-5 py-10 text-center text-sm text-destructive">
             {error}
           </div>
         )}
 
-        {!isLoading && !error && studios.length === 0 && (
+        {!error && studios.length === 0 && (
           <div className="rounded-xl border border-dashed border-border px-5 py-10 text-center text-muted-foreground dark:border-zinc-800">
             Featured studios are not available yet.
           </div>
         )}
 
-        {!isLoading && !error && studios.length > 0 && (
+        {!error && studios.length > 0 && (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {studios.map((studio) => (
               <StudioCard

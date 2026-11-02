@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,11 @@ const StudioCard = ({ studio }: StudioCardProps) => {
     studio.image ??
     studio.bannerImage ??
     "/studio-placeholder.jpg";
+  const canOptimizeImage =
+    !image.startsWith("http") ||
+    /^https:\/\/(?:i\.ibb\.co|images\.unsplash\.com|media\.istockphoto\.com)\//i.test(
+      image,
+    );
   const category =
     studio.category?.trim().toLowerCase() === "workshop"
       ? "Art Workshop"
@@ -42,11 +48,14 @@ const StudioCard = ({ studio }: StudioCardProps) => {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
       <div className="relative aspect-video overflow-hidden bg-muted">
-        <div
-          role="img"
-          aria-label={`${studio.title} interior`}
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-          style={{ backgroundImage: `url("${image}")` }}
+        <Image
+          src={image}
+          alt={`${studio.title} interior`}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          loading="lazy"
+          unoptimized={!canOptimizeImage}
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/60 to-transparent" />
         
