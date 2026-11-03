@@ -15,6 +15,23 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/sign-up/email") return;
 
+      const email =
+        typeof ctx.body?.email === "string"
+          ? ctx.body.email.trim().toLowerCase()
+          : "";
+      if (email) {
+        const existingUser = await db.collection("user").findOne(
+          { email },
+          { collation: { locale: "en", strength: 2 } },
+        );
+        if (existingUser) {
+          throw new APIError("UNPROCESSABLE_ENTITY", {
+            message: "An account with this email already exists. Please log in instead.",
+            code: "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL",
+          });
+        }
+      }
+
       const password = ctx.body?.password;
 
       if (
