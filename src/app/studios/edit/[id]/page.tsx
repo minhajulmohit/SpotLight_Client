@@ -55,8 +55,8 @@ type StudioForm = {
   imageUrl: string;
   overview: string;
   amenities: string;
-  hostName: string;
-  hostEmail: string;
+  ownerName: string;
+  ownerEmail: string;
 };
 
 const urlPattern = /^https?:\/\/.+/i;
@@ -77,8 +77,8 @@ const EditStudioContent = () => {
     imageUrl: "",
     overview: "",
     amenities: "",
-    hostName: "",
-    hostEmail: "",
+    ownerName: "",
+    ownerEmail: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,7 +89,7 @@ const EditStudioContent = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    apiFetch(`/all-studio/${(params.id)}`, {
+    apiFetch(`/api/studios/${params.id}`, {
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -112,8 +112,8 @@ const EditStudioContent = () => {
           imageUrl: imageList[0] ?? "",
           overview: studio.overview ?? studio.description ?? "",
           amenities: Array.isArray(studio.amenities) ? studio.amenities.join(", ") : "",
-          hostName: studio.hostName || studio.host?.name || user?.name || "SpotLight Host",
-          hostEmail: studio.hostEmail || studio.host?.email || user?.email || "",
+          ownerName: studio.ownerName || user?.name || "SpotLight Owner",
+          ownerEmail: studio.ownerEmail || user?.email || "",
         });
         setGallery(imageList.slice(1));
       })
@@ -246,7 +246,7 @@ const EditStudioContent = () => {
       const imageList = Array.from(
         new Set([form.imageUrl.trim(), ...gallery].filter(Boolean)),
       );
-      const response = await apiFetch(`/all-studio/${encodeURIComponent(params.id)}`, {
+      const response = await apiFetch(`/api/studios/${encodeURIComponent(params.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -306,7 +306,7 @@ const EditStudioContent = () => {
       <section className="border-b border-border bg-muted/40 py-12 text-foreground dark:bg-zinc-950 dark:text-white sm:py-16">
         <div className="container mx-auto px-4 max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Host Controls
+            Owner Controls
           </p>
           <h1 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">
             Update Studio Listing
@@ -581,7 +581,7 @@ const EditStudioContent = () => {
           
           <Card className="dark:bg-zinc-900 dark:ring-zinc-800">
             <CardHeader>
-              <CardTitle>Host Details (Read-only)</CardTitle>
+              <CardTitle>Owner Details (Read-only)</CardTitle>
               <CardDescription>
                 Locked to the studio owner account.
               </CardDescription>
@@ -589,20 +589,20 @@ const EditStudioContent = () => {
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="hostName">Host Name (Read-only)</Label>
+                  <Label htmlFor="ownerName">Owner Name (Read-only)</Label>
                   <Input
-                    id="hostName"
+                    id="ownerName"
                     readOnly
-                    value={form.hostName}
+                    value={form.ownerName}
                     className="mt-1.5 bg-muted text-muted-foreground cursor-not-allowed"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="hostEmail">Host Email (Read-only)</Label>
+                  <Label htmlFor="ownerEmail">Owner Email (Read-only)</Label>
                   <Input
-                    id="hostEmail"
+                    id="ownerEmail"
                     readOnly
-                    value={form.hostEmail}
+                    value={form.ownerEmail}
                     className="mt-1.5 bg-muted text-muted-foreground cursor-not-allowed"
                   />
                 </div>

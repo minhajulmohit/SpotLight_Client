@@ -69,7 +69,7 @@ MONGODB_URI=your_mongodb_connection_string
 PORT=8000
 CLIENT_URL=http://localhost:3000
 ```
-> `CLIENT_URL` must exactly match the client's `BETTER_AUTH_URL`; Express uses it for CORS and to verify the JWT issuer/audience. Browser API requests go through the same-origin Next.js proxy, which reads `NEXT_PUBLIC_API_URL` server-side and forwards the JWT without exposing it to browser JavaScript.
+> `CLIENT_URL` must exactly match the client's `BETTER_AUTH_URL`; Express uses it to verify the JWT issuer/audience. API requests are forwarded by the existing `src/proxy.ts`. It stores the JWT in an HTTPOnly cookie and sends it to Express; browser JavaScript cannot read the token.
 
 ### 4. Run Development Servers
 ```bash

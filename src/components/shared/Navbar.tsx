@@ -19,6 +19,7 @@ import {
 import ThemeToggle from "./ThemeToggle";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -93,16 +94,30 @@ const NavbarContent = () => {
 
   const handleLogout = async () => {
     try {
-      await authClient.signOut();
+      const result = await authClient.signOut();
+      if (result.error) {
+        throw new Error(result.error.message ?? "Logout failed.");
+      }
+
+      const response = await fetch("/api/auth/api-token", {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        throw new Error("Could not clear the secure API session.");
+      }
+
+      toast.success("You have been logged out.");
+      closeMenus();
+      router.push("/");
+      router.refresh();
     } catch (error) {
-      console.log("Logout failed", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Logout failed. Please try again.",
+      );
     }
-
-    closeMenus();
-
-    router.push("/");
-
-    router.refresh();
   };
 
   const isLinkActive = (href: string) => {

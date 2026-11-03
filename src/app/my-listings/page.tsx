@@ -37,7 +37,7 @@ type Studio = {
   imageUrl: string;
   securityDeposit?: number;
   capacity?: number;
-  hostEmail?: string;
+  ownerEmail?: string;
 };
 
 const MyListingsPage = () => {
@@ -59,7 +59,7 @@ const MyListingsPage = () => {
       setIsLoading(true);
 
       try {
-        const response = await apiFetch("/all-studio");
+        const response = await apiFetch("/api/studios");
 
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
@@ -98,7 +98,7 @@ const MyListingsPage = () => {
     if (!userEmail) return [];
     const currentEmail = userEmail.trim().toLowerCase();
     return studios.filter((studio) => {
-      const studioEmail = (studio.hostEmail || "").trim().toLowerCase();
+      const studioEmail = (studio.ownerEmail || "").trim().toLowerCase();
       return studioEmail === currentEmail;
     });
   }, [studios, userEmail]);
@@ -115,7 +115,7 @@ const MyListingsPage = () => {
     setIsDeleting(true);
     const deletedTitle = deleteTarget.title;
     try {
-      const response = await apiFetch(`/all-studio/${deleteTarget._id}`, {
+      const response = await apiFetch(`/api/studios/${deleteTarget._id}`, {
         method: "DELETE",
       });
       const data = await response.json();
@@ -178,7 +178,7 @@ const MyListingsPage = () => {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-                Host Management
+                Owner Management
               </p>
               <h1 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">
                 My Studio Listings
@@ -254,7 +254,7 @@ const MyListingsPage = () => {
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               You haven&apos;t listed any studios under your account (
-              {user.email}). Publish your first creative space to start hosting!
+              {user.email}). Publish your first creative space to start listing!
             </p>
             <Button
               nativeButton={false}

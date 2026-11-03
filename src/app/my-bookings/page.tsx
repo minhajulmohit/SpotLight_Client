@@ -33,8 +33,8 @@ export type Booking = {
   _id: string;
   studioId: string;
   studioTitle: string;
-  hostName: string;
-  hostEmail: string;
+  ownerName: string;
+  ownerEmail: string;
   customerName: string;
   customerEmail: string;
   bookingDate: string;
@@ -129,7 +129,7 @@ const downloadInvoicePdf = async (booking: Booking) => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(82, 82, 91);
-  doc.text(`Host: ${booking.hostName} (${booking.hostEmail})`, margin, y);
+  doc.text(`Owner: ${booking.ownerName} (${booking.ownerEmail})`, margin, y);
 
   // Guest + schedule columns
   y += 44;
@@ -242,20 +242,20 @@ const getStatusBadge = (status: BookingStatus) => {
 };
 
 const fetchBookings = async () => {
-  const guestResponse = await apiFetch("/bookings");
+  const guestResponse = await apiFetch("/api/bookings");
   const guestData = await guestResponse.json();
 
-  const hostResponse = await apiFetch("/bookings?hostEmail=true");
-  const hostData = await hostResponse.json();
+  const ownerResponse = await apiFetch("/api/bookings?ownerEmail=true");
+  const ownerData = await ownerResponse.json();
 
-  if (!guestResponse.ok || !hostResponse.ok) {
+  if (!guestResponse.ok || !ownerResponse.ok) {
     throw new Error("Failed to load bookings.");
   }
 
   const guestList = Array.isArray(guestData) ? guestData : [];
-  const hostList = Array.isArray(hostData) ? hostData : [];
+  const ownerList = Array.isArray(ownerData) ? ownerData : [];
 
-  const combinedList = [...guestList, ...hostList];
+  const combinedList = [...guestList, ...ownerList];
 
   const uniqueList: Booking[] = [];
 
@@ -334,7 +334,7 @@ const MyBookingsPage = () => {
     setCancellingId(bookingId);
 
     try {
-      const response = await apiFetch(`/bookings/${bookingId}/cancel`, {
+      const response = await apiFetch(`/api/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
@@ -370,13 +370,13 @@ const MyBookingsPage = () => {
     }
   };
 
-  const handleHostStatusChange = async (
+  const handleOwnerStatusChange = async (
     booking: Booking,
     status: "Confirmed" | "Completed",
   ) => {
     setConfirmingId(booking._id);
     try {
-      const response = await apiFetch(`/bookings/${booking._id}/status`, {
+      const response = await apiFetch(`/api/bookings/${booking._id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -546,24 +546,24 @@ const MyBookingsPage = () => {
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      Host:{" "}
+                      Owner:{" "}
                       <span className="font-medium text-foreground">
-                        {booking.hostName}
+                        {booking.ownerName}
                       </span>{" "}
-                      ({booking.hostEmail})
+                      ({booking.ownerEmail})
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
                     {["Pending", "Confirmed"].includes(booking.status) &&
-                      String(booking.hostEmail ?? "")
+                      String(booking.ownerEmail ?? "")
                         .trim()
                         .toLowerCase() === user.email?.trim().toLowerCase() && (
                         <Button
                           size="sm"
                           disabled={confirmingId === booking._id}
                           onClick={() =>
-                            handleHostStatusChange(
+                            handleOwnerStatusChange(
                               booking,
                               booking.status === "Pending"
                                 ? "Confirmed"
@@ -695,8 +695,8 @@ const MyBookingsPage = () => {
                     {selectedBookingForInvoice.studioTitle}
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    Host: {selectedBookingForInvoice.hostName} (
-                    {selectedBookingForInvoice.hostEmail})
+                    Owner: {selectedBookingForInvoice.ownerName} (
+                    {selectedBookingForInvoice.ownerEmail})
                   </p>
                 </div>
                 <span

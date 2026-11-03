@@ -316,14 +316,14 @@ const AddStudioForm = () => {
       images: imageList,
       amenities,
       overview: form.overview.trim(),
-      hostName: user?.name || "SpotLight Host",
-      hostEmail: user?.email || "",
+      ownerName: user?.name || "SpotLight Owner",
+      ownerEmail: user?.email || "",
     };
 
     setIsSubmitting(true);
 
     try {
-      const response = await apiFetch("/add-new-studio", {
+      const response = await apiFetch("/api/studios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -366,7 +366,7 @@ const AddStudioForm = () => {
           Sign In Required
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Please log in to your account before hosting a new creative space.
+          Please log in to your account before listing a creative space.
         </p>
         <Button
           nativeButton={false}
@@ -383,7 +383,7 @@ const AddStudioForm = () => {
     <form onSubmit={handleSubmit} noValidate>
       <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Host Your Space
+          List Your Space
         </p>
         <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
           List Your Creative Studio
@@ -763,7 +763,7 @@ const AddStudioForm = () => {
 
       <Card className="mt-6 dark:bg-zinc-900 dark:ring-zinc-800">
         <CardHeader>
-          <CardTitle>Host Details</CardTitle>
+          <CardTitle>Owner Details</CardTitle>
           <CardDescription>
             Automatically linked to your authenticated creator account.
           </CardDescription>
@@ -772,10 +772,10 @@ const AddStudioForm = () => {
           <FieldGroup>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="hostName">Host Name</FieldLabel>
+                <FieldLabel htmlFor="ownerName">Owner Name</FieldLabel>
                 <Input
-                  id="hostName"
-                  name="hostName"
+                  id="ownerName"
+                  name="ownerName"
                   readOnly
                   value={user?.name ?? ""}
                   className="bg-muted text-muted-foreground cursor-not-allowed"
@@ -783,10 +783,10 @@ const AddStudioForm = () => {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="hostEmail">Host Email</FieldLabel>
+                <FieldLabel htmlFor="ownerEmail">Owner Email</FieldLabel>
                 <Input
-                  id="hostEmail"
-                  name="hostEmail"
+                  id="ownerEmail"
+                  name="ownerEmail"
                   readOnly
                   value={user?.email ?? ""}
                   className="bg-muted text-muted-foreground cursor-not-allowed"

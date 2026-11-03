@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
 
 async function getStudio(id: string): Promise<StudioDetails> {
   try {
-    const response = await fetch(`${BACKEND_URL}/all-studio/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/studios/${id}`, {
       cache: "no-store",
     });
 

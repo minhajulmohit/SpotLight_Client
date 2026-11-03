@@ -39,7 +39,7 @@ const FeaturedStudios = async () => {
   let error: string | null = null;
 
   try {
-    const response = await fetch(`${backendUrl}/featured-studio`, {
+    const response = await fetch(`${backendUrl}/api/studios/featured`, {
       next: { revalidate: 60 },
     });
 

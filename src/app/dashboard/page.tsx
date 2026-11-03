@@ -20,7 +20,7 @@ import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 interface Studio {
-  hostEmail?: string;
+  ownerEmail?: string;
 }
 
 export default function DashboardPage() {
@@ -39,14 +39,14 @@ export default function DashboardPage() {
 
     const loadDashboardStats = async () => {
       try {
-        const [studiosRes, myBookingsRes, hostBookingsRes] = await Promise.all([
-          apiFetch("/all-studio")
+        const [studiosRes, myBookingsRes, ownerBookingsRes] = await Promise.all([
+          apiFetch("/api/studios")
             .then((r) => r.json())
             .catch(() => []),
-          apiFetch("/bookings")
+          apiFetch("/api/bookings")
             .then((r) => r.json())
             .catch(() => []),
-          apiFetch("/bookings?hostEmail=true")
+          apiFetch("/api/bookings?ownerEmail=true")
             .then((r) => r.json())
             .catch(() => []),
         ]);
@@ -57,15 +57,15 @@ export default function DashboardPage() {
         const currentEmail = user.email.toLowerCase();
 
         const myStudios = allStudios.filter((studio: Studio) => {
-          const host = studio.hostEmail?.toLowerCase();
+          const owner = studio.ownerEmail?.toLowerCase();
 
-          return host === currentEmail;
+          return owner === currentEmail;
         });
 
-        const hostBookings = Array.isArray(hostBookingsRes)
-          ? hostBookingsRes
+        const ownerBookings = Array.isArray(ownerBookingsRes)
+          ? ownerBookingsRes
           : [];
-        const pendingBookings = hostBookings.filter(
+        const pendingBookings = ownerBookings.filter(
           (b) => b.status === "Pending",
         );
 
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                 className="gap-1.5"
               >
                 <Plus className="size-4" />
-                Host New Space
+                Add Owner Listing
               </Button>
               <Button
                 variant="outline"
@@ -235,7 +235,7 @@ export default function DashboardPage() {
               {isLoadingStats ? "-" : stats.pendingBookingsCount}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Awaiting host confirmation
+              Awaiting owner confirmation
             </p>
             <Link
               href="/my-bookings"

@@ -76,8 +76,8 @@ const BookingModal = ({
   const customerName = session?.user?.name ?? "";
   const customerEmail = session?.user?.email ?? "";
   const studioId = studio._id ?? studio.id ?? "";
-  const hostName = studio.host?.name ?? studio.hostName ?? "Studio Host";
-  const hostEmail = studio.host?.email ?? studio.hostEmail ?? "";
+  const ownerName = studio.ownerName ?? "Studio Owner";
+  const ownerEmail = studio.ownerEmail ?? "";
   const availabilityKey = `${studioId}:${bookingDate}`;
   const isLoadingAvailability = availability.key !== availabilityKey;
   const bookedTimes =
@@ -95,7 +95,7 @@ const BookingModal = ({
     const controller = new AbortController();
 
     apiFetch(
-      `/availability?studioId=${encodeURIComponent(studioId)}&bookingDate=${encodeURIComponent(bookingDate)}`,
+      `/api/bookings/availability?studioId=${encodeURIComponent(studioId)}&bookingDate=${encodeURIComponent(bookingDate)}`,
       { signal: controller.signal },
     )
       .then(async (response) => {
@@ -132,14 +132,14 @@ const BookingModal = ({
 
     setIsSubmitting(true);
     try {
-      const response = await apiFetch("/bookings", {
+      const response = await apiFetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studioId,
           studioTitle: studio.title,
-          hostName,
-          hostEmail,
+          ownerName,
+          ownerEmail,
           customerName,
           customerEmail,
           bookingDate,
@@ -187,8 +187,8 @@ const BookingModal = ({
               <input readOnly value={customerName || customerEmail || "Sign in required"} className="h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm dark:border-zinc-800" />
             </label>
             <label className="space-y-2 text-sm font-medium">
-              Host
-              <input readOnly value={hostName} className="h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm dark:border-zinc-800" />
+              Studio owner
+              <input readOnly value={ownerName} className="h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm dark:border-zinc-800" />
             </label>
           </div>
 

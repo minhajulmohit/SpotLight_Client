@@ -46,14 +46,8 @@ export type StudioDetails = {
   imageUrl?: string;
   image?: string;
   bannerImage?: string;
-  host?: {
-    name?: string;
-    email?: string;
-    image?: string;
-    avatar?: string;
-  };
-  hostName?: string;
-  hostEmail?: string;
+  ownerName?: string;
+  ownerEmail?: string;
 };
 
 const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
@@ -78,10 +72,9 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
   const capacity = studio.capacity ?? studio.maxCapacity ?? 0;
   const amenities = studio.amenities ?? [];
   const rating = studio.rating ?? 0;
-  const hostName =
-    studio.host?.name ?? studio.hostName ?? "SpotLight Studio Host";
-  const hostEmail = studio.host?.email ?? studio.hostEmail;
-  const hostInitial = hostName.trim().charAt(0).toUpperCase() || "S";
+  const ownerName = studio.ownerName ?? "SpotLight Studio Owner";
+  const ownerEmail = studio.ownerEmail;
+  const ownerInitial = ownerName.trim().charAt(0).toUpperCase() || "S";
   const description = studio.overview ?? studio.description;
   const moveImage = (direction: number) =>
     setSelectedImage(
@@ -239,19 +232,19 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
             </section>
 
             <section className="mt-10">
-              <h2 className="font-heading text-2xl font-bold">Hosted by</h2>
+              <h2 className="font-heading text-2xl font-bold">Studio owner</h2>
               <div className="mt-4 flex items-center gap-4 rounded-xl border border-border p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <div
-                  aria-label={`${hostName} profile`}
+                  aria-label={`${ownerName} profile`}
                   className="flex size-14 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xl font-bold text-zinc-950"
                 >
-                  {hostInitial}
+                  {ownerInitial}
                 </div>
                 <div>
-                  <p className="font-semibold">{hostName}</p>
-                  {hostEmail && (
+                  <p className="font-semibold">{ownerName}</p>
+                  {ownerEmail && (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {hostEmail}
+                      {ownerEmail}
                     </p>
                   )}
                 </div>

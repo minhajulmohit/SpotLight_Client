@@ -64,7 +64,7 @@ const StudiosContent = () => {
     const fetchStudios = async () => {
       setIsLoading(true);
       try {
-        const response = await apiFetch("/all-studio");
+        const response = await apiFetch("/api/studios");
         const data = await response.json();
 
         if (!response.ok) {

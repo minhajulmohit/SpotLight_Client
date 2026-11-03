@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState, type FormEvent } from "react";
 import { Aperture, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 import { Button } from "../ui/button";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 
 const xIcon = (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="size-4">
@@ -156,7 +164,12 @@ const categoryLinks = (
 );
 
 const Footer = () => {
-  const handleSubscribe = (event: React.FormEvent<HTMLFormElement>) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openPolicy, setOpenPolicy] = useState<"terms" | "privacy" | null>(
+    null,
+  );
+
+  const handleSubscribe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const email = String(new FormData(form).get("email") ?? "").trim();
@@ -166,8 +179,29 @@ const Footer = () => {
       return;
     }
 
-    toast.success("You're on the list! Watch your inbox for new studio drops.");
-    form.reset();
+    setIsSubmitting(true);
+    try {
+      const response = await apiFetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message ?? "Could not subscribe to the newsletter.");
+      }
+
+      toast.success(data.message ?? "Thank you for subscribing.");
+      form.reset();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not subscribe to the newsletter.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -233,9 +267,10 @@ const Footer = () => {
               <Button
                 type="submit"
                 size="lg"
+                disabled={isSubmitting}
                 className="transition-colors duration-200"
               >
-                Subscribe
+                {isSubmitting ? "Subscribing..." : "Subscribe"}
                 <ArrowRight />
               </Button>
             </form>
@@ -246,10 +281,59 @@ const Footer = () => {
           <ul className="flex gap-2">{socialLinks}</ul>
           <p className="text-sm text-muted-foreground transition-colors duration-200 dark:text-zinc-500">
             &copy; 2026 SpotLight. All rights reserved. Bookings follow each
-            host&apos;s listed space rules.
+            owner&apos;s listed studio rules.
           </p>
+          <div className="flex gap-4 text-sm">
+            <button
+              type="button"
+              onClick={() => setOpenPolicy("terms")}
+              className={linkClass}
+            >
+              Terms of Service
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpenPolicy("privacy")}
+              className={linkClass}
+            >
+              Privacy Policy
+            </button>
+          </div>
         </div>
       </div>
+      <Dialog
+        open={openPolicy !== null}
+        onOpenChange={(open) => !open && setOpenPolicy(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {openPolicy === "terms" ? "Terms of Service" : "Privacy Policy"}
+            </DialogTitle>
+            <DialogDescription>
+              {openPolicy === "terms"
+                ? "Please review the basic terms for using SpotLight."
+                : "This is a short explanation of how information is used on SpotLight."}
+            </DialogDescription>
+          </DialogHeader>
+          {openPolicy === "terms" ? (
+            <p className="leading-6 text-muted-foreground">
+              Use accurate account and booking information. Studio listings
+              describe spaces offered by their owners; review the listing rules
+              before requesting a booking. A booking request is subject to the
+              owner&apos;s approval, and cancellations follow the booking status
+              shown in your account.
+            </p>
+          ) : (
+            <p className="leading-6 text-muted-foreground">
+              SpotLight uses account details to provide sign-in and booking
+              features. If you subscribe to the newsletter, your email address
+              is stored so your subscription can be managed. Do not submit
+              sensitive personal information in public listing details.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </footer>
   );
 };
