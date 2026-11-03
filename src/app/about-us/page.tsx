@@ -44,7 +44,7 @@ export default function AboutUsPage() {
   return (
     <div className="bg-background pb-20">
       {/* Hero Header */}
-      <section className="border-b border-border bg-muted/40 py-16 text-foreground dark:bg-zinc-950 dark:text-white sm:py-24">
+      <section className="border-b border-border bg-muted/40 py-12 text-foreground dark:bg-zinc-950 dark:text-white sm:py-20">
         <div className="container mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
             <Sparkles className="size-3.5" />
@@ -55,7 +55,7 @@ export default function AboutUsPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground dark:text-zinc-300 sm:text-lg">
             A peer-to-peer marketplace uniting creative filmmakers, photographers,
-            musicians, and podcasters with extraordinary production spaces.
+            musicians, and podcaster&apos;s with extraordinary production spaces.
           </p>
         </div>
       </section>
@@ -64,7 +64,7 @@ export default function AboutUsPage() {
       <section className="container mx-auto px-4 py-16 sm:py-20">
         <div className="mx-auto max-w-3xl space-y-6 text-base leading-relaxed text-muted-foreground sm:text-lg">
           <p>
-            Founded with the belief that creative vision shouldn&apos;t be bottlenecked by studio
+            Founded with the belief that creative vision shouldn&apos;t be bottleneck by studio
             accessibility, <strong className="text-foreground">Spotlight</strong> bridges the gap between
             creative workspace hosts and independent producers.
           </p>

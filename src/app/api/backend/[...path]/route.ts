@@ -1,9 +1,7 @@
 import type { NextRequest } from "next/server";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const AUTH_URL =
-  process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+const AUTH_URL = process.env.BETTER_AUTH_URL;
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -11,7 +9,10 @@ type RouteContext = {
 
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const { path } = await context.params;
-  const target = new URL(path.map(encodeURIComponent).join("/"), `${BACKEND_URL}/`);
+  const target = new URL(
+    path.map(encodeURIComponent).join("/"),
+    `${BACKEND_URL}/`,
+  );
   target.search = request.nextUrl.search;
 
   const headers = new Headers();

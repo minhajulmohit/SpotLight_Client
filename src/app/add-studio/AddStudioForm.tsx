@@ -74,7 +74,16 @@ type FormState = {
   overview: string;
 };
 
-type FormErrors = Partial<Record<keyof FormState, string>>;
+type FormErrors = {
+  title?: string;
+  category?: string;
+  hourlyRate?: string;
+  securityDeposit?: string;
+  capacity?: string;
+  location?: string;
+  imageUrl?: string;
+  overview?: string;
+};;
 
 const initialForm: FormState = {
   title: "",
@@ -114,9 +123,9 @@ const AddStudioForm = () => {
   };
 
   const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
@@ -161,10 +170,10 @@ const AddStudioForm = () => {
   };
 
   const handleGalleryUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = "";
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
     if (!files.length) return;
 
     if (files.some((file) => file.size > 10 * 1024 * 1024)) {
@@ -284,8 +293,8 @@ const AddStudioForm = () => {
     return nextErrors;
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
     const nextErrors = validate();
     if (Object.keys(nextErrors).length > 0) {

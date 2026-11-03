@@ -29,7 +29,7 @@ type FormValues = {
   password: string;
 };
 
-type FormErrors = Partial<Record<keyof FormValues, string>>;
+type FormErrors = { email?: string; password?: string };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -72,7 +72,7 @@ function GoogleIcon() {
 const LoginContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackURL = searchParams.get("callbackURL") || "/dashboard";
+  const callbackURL = searchParams.get("callbackURL") || "/";
 
   const [values, setValues] = useState<FormValues>({
     email: "",
@@ -87,29 +87,32 @@ const LoginContent = () => {
 
   const isBusy = isSubmitting || isGoogleLoading;
 
-  const handleChange =
-    (field: keyof FormValues) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setValues((previous) => ({ ...previous, [field]: event.target.value }));
-      setErrors((previous) => ({ ...previous, [field]: undefined }));
-      setFormError(null);
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setValues((previous) => ({ ...previous, [name]: value }));
+    setErrors((previous) => ({ ...previous, [name]: undefined }));
+    setFormError(null);
+  };
 
   const validate = (): FormErrors => {
     const nextErrors: FormErrors = {};
+    const cleanEmail = values.email.trim();
+    const isEmailValid = emailPattern.test(cleanEmail);
+    const password = values.password.trim() === "";
 
-    if (!emailPattern.test(values.email.trim())) {
+    if (!isEmailValid) {
       nextErrors.email = "Please enter a valid email address.";
     }
 
-    if (!values.password) {
+    if (!password) {
       nextErrors.password = "Please enter your password.";
     }
 
     return nextErrors;
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
     const nextErrors = validate();
     if (Object.keys(nextErrors).length > 0) {
@@ -125,7 +128,7 @@ const LoginContent = () => {
         email: values.email.trim(),
         password: values.password,
         rememberMe,
-        callbackURL: "/",
+        callbackURL: callbackURL,
       });
 
       if (error) {
@@ -192,26 +195,26 @@ const LoginContent = () => {
   };
 
   return (
-    <div className="relative overflow-hidden">
+    <div className=" relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-32 -left-24 size-80 rounded-full bg-primary/15 blur-3xl"
+        className=" pointer-events-none absolute -top-32 -left-24 size-80 rounded-full bg-primary/15 blur-3xl"
       />
       <div
         aria-hidden
         className="pointer-events-none absolute -right-24 -bottom-40 size-80 rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div className="container relative mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:min-h-[calc(100vh-9rem)] lg:grid-cols-2 lg:items-center lg:py-16">
+      <div className="container relative mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:min-h-[calc(100vh-9rem)] lg:grid-cols-2 lg:items-start  lg:py-16">
         {/* Brand panel (desktop only) */}
-        <section className="hidden lg:flex lg:flex-col lg:justify-center">
+        <section className="hidden lg:flex lg:flex-col lg:mt-5 lg:justify-center">
           <span className="w-fit rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wide text-primary uppercase">
             Welcome back
           </span>
 
           <h1 className="mt-5 text-4xl leading-tight font-bold text-foreground xl:text-5xl">
-            Your next shoot is{" "}
-            <span className="text-primary">one login</span> away.
+            Your next shoot is <span className="text-primary">one login</span>{" "}
+            away.
           </h1>
 
           <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
@@ -294,7 +297,7 @@ const LoginContent = () => {
                   placeholder="you@example.com"
                   className="h-11 pl-9"
                   value={values.email}
-                  onChange={handleChange("email")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.email)}
                 />
               </div>
@@ -311,7 +314,8 @@ const LoginContent = () => {
                   type="button"
                   onClick={() =>
                     toast.info("Notice", {
-                      description: "Password reset is disabled for examiner evaluation.",
+                      description:
+                        "Password reset is disabled for examiner evaluation.",
                     })
                   }
                   className="text-xs font-medium text-primary hover:underline"
@@ -329,7 +333,7 @@ const LoginContent = () => {
                   placeholder="Your password"
                   className="h-11 pr-10 pl-9"
                   value={values.password}
-                  onChange={handleChange("password")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.password)}
                 />
                 <button

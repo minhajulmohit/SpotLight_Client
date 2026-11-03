@@ -35,7 +35,14 @@ type FormValues = {
   confirmPassword: string;
 };
 
-type FormErrors = Partial<Record<keyof FormValues | "terms", string>>;
+type FormErrors = {
+  name?: string;
+  email?: string;
+  photoURL?: string;
+  password?: string;
+  confirmPassword?: string;
+  terms?: string;
+};
 
 const benefits = [
   {
@@ -101,15 +108,15 @@ const RegisterPage = () => {
 
   const isBusy = isSubmitting || isGoogleLoading || isUploadingImage;
 
-  const handleChange =
-    (field: keyof FormValues) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setValues((previous) => ({ ...previous, [field]: event.target.value }));
-      setErrors((previous) => ({ ...previous, [field]: undefined }));
-      setFormError(null);
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setValues((previous) => ({ ...previous, [name]: value }));
+    setErrors((previous) => ({ ...previous, [name]: undefined }));
+    setFormError(null);
+  };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
@@ -122,20 +129,24 @@ const RegisterPage = () => {
     const formData = new FormData();
     formData.append("image", file);
 
-    const apiKey =
-      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "ca7705d5cd180ba7cfca2b3ef496b6e6";
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
     if (!apiKey) {
-      toast.error("ImgBB API key is missing. Please add NEXT_PUBLIC_IMGBB_API_KEY to .env");
+      toast.error(
+        "ImgBB API key is missing. Please add NEXT_PUBLIC_IMGBB_API_KEY to .env",
+      );
       setIsUploadingImage(false);
       return;
     }
 
     try {
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${apiKey}`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
       const data = await response.json();
 
       if (data?.data?.url) {
@@ -150,41 +161,49 @@ const RegisterPage = () => {
       const message =
         error instanceof Error ? error.message : "Could not upload image.";
       toast.error(`ImgBB Upload Error: ${message}`, {
-        description: "Please check your ImgBB API key in .env or paste a direct image URL.",
+        description:
+          "Please check your ImgBB API key in .env or paste a direct image URL.",
       });
     } finally {
       setIsUploadingImage(false);
-      event.target.value = "";
+      e.target.value = "";
     }
   };
 
   const validate = (): FormErrors => {
     const nextErrors: FormErrors = {};
 
-    if (values.name.trim().length < 2) {
+    const name = values.name.trim();
+    const email = values.email.trim();
+    const photoUrl = values.photoURL.trim();
+    const password = values.password;
+    const confirmPassword = values.confirmPassword;
+
+    if (name.length < 2) {
       nextErrors.name = "Please enter your full name (at least 2 characters).";
     }
 
-    if (!emailPattern.test(values.email.trim())) {
+    if (!emailPattern.test(email)) {
       nextErrors.email = "Please enter a valid email address.";
     }
 
-    if (!values.photoURL.trim()) {
+    if (!photoUrl) {
       nextErrors.photoURL = "Please upload a photo or provide a photo URL.";
-    } else if (!urlPattern.test(values.photoURL.trim())) {
-      nextErrors.photoURL =
-        "Photo URL must start with http:// or https://.";
+    } else if (!urlPattern.test(photoUrl)) {
+      nextErrors.photoURL = "Photo URL must start with http:// or https://.";
     }
 
-    if (values.password.length < 6) {
+    if (password.length < 6) {
       nextErrors.password = "Password must be at least 6 characters long.";
-    } else if (!/[A-Z]/.test(values.password)) {
-      nextErrors.password = "Password must contain at least one uppercase letter.";
-    } else if (!/[a-z]/.test(values.password)) {
-      nextErrors.password = "Password must contain at least one lowercase letter.";
+    } else if (!/[A-Z]/.test(password)) {
+      nextErrors.password =
+        "Password must contain at least one uppercase letter.";
+    } else if (!/[a-z]/.test(password)) {
+      nextErrors.password =
+        "Password must contain at least one lowercase letter.";
     }
 
-    if (values.confirmPassword !== values.password) {
+    if (confirmPassword !== password) {
       nextErrors.confirmPassword = "Passwords do not match.";
     }
 
@@ -195,8 +214,8 @@ const RegisterPage = () => {
     return nextErrors;
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
     const nextErrors = validate();
     if (Object.keys(nextErrors).length > 0) {
@@ -223,8 +242,7 @@ const RegisterPage = () => {
 
         const message = isDuplicate
           ? "An account with this email already exists. Please log in instead."
-          : error.message ||
-          "Could not create your account. Please try again.";
+          : error.message || "Could not create your account. Please try again.";
 
         setFormError(message);
         toast.error("Registration failed", { description: message });
@@ -288,16 +306,16 @@ const RegisterPage = () => {
         className="pointer-events-none absolute -bottom-40 -left-24 size-80 rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div className="container relative mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:min-h-[calc(100vh-9rem)] lg:grid-cols-2 lg:items-center lg:py-16">
+      <div className="container relative mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:min-h-[calc(100vh-9rem)] lg:grid-cols-2 lg:items-start lg:py-16">
         {/* Brand / benefits panel (desktop only) */}
-        <section className="hidden lg:flex lg:flex-col lg:justify-center">
+        <section className="hidden lg:mt-5 lg:flex lg:flex-col lg:justify-center">
           <span className="w-fit rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wide text-primary uppercase">
             Join SpotLight
           </span>
 
           <h1 className="mt-5 text-4xl leading-tight font-bold text-foreground xl:text-5xl">
-            Turn empty spaces into{" "}
-            <span className="text-primary">booked</span> experiences.
+            Turn empty spaces into <span className="text-primary">booked</span>{" "}
+            experiences.
           </h1>
 
           <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
@@ -378,10 +396,10 @@ const RegisterPage = () => {
                   id="name"
                   name="name"
                   autoComplete="name"
-                  placeholder="Ayesha Rahman"
+                  placeholder="Your Name"
                   className="h-11 pl-9"
                   value={values.name}
-                  onChange={handleChange("name")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.name)}
                 />
               </div>
@@ -403,7 +421,7 @@ const RegisterPage = () => {
                   placeholder="you@example.com"
                   className="h-11 pl-9"
                   value={values.email}
-                  onChange={handleChange("email")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.email)}
                 />
               </div>
@@ -427,8 +445,9 @@ const RegisterPage = () => {
               <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border bg-muted/30 p-3 dark:border-zinc-800">
                 <label
                   htmlFor="register-imgbb-file"
-                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition hover:bg-muted dark:border-zinc-800 ${isBusy ? "pointer-events-none opacity-60" : ""
-                    }`}
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition hover:bg-muted dark:border-zinc-800 ${
+                    isBusy ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
                   {isUploadingImage ? (
                     <Loader2 className="size-4 animate-spin text-primary" />
@@ -438,7 +457,8 @@ const RegisterPage = () => {
                   <span>
                     {isUploadingImage
                       ? "Uploading image..."
-                      : "Upload Image from Device"}                  </span>
+                      : "Upload Image from Device"}{" "}
+                  </span>
                   <input
                     id="register-imgbb-file"
                     type="file"
@@ -461,7 +481,7 @@ const RegisterPage = () => {
                   placeholder="Or paste direct image URL (https://...)"
                   className="h-11 pr-9 pl-9"
                   value={values.photoURL}
-                  onChange={handleChange("photoURL")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.photoURL)}
                   disabled={isBusy}
                 />
@@ -516,7 +536,8 @@ const RegisterPage = () => {
                 <p className="text-xs text-destructive">{errors.photoURL}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Upload an image from your device via ImgBB or paste a direct image URL.
+                  Upload an image from your device via ImgBB or paste a direct
+                  image URL.
                 </p>
               )}
             </div>
@@ -534,7 +555,7 @@ const RegisterPage = () => {
                   placeholder="At least 6 characters"
                   className="h-11 pr-10 pl-9"
                   value={values.password}
-                  onChange={handleChange("password")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.password)}
                 />
                 <button
@@ -573,7 +594,7 @@ const RegisterPage = () => {
                   placeholder="Repeat your password"
                   className="h-11 pl-9"
                   value={values.confirmPassword}
-                  onChange={handleChange("confirmPassword")}
+                  onChange={handleChange}
                   aria-invalid={Boolean(errors.confirmPassword)}
                 />
               </div>

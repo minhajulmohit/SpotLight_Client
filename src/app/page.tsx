@@ -5,7 +5,8 @@ import FeaturedStudios, {
   FeaturedStudiosSkeleton,
 } from "@/components/home/FeaturedStudios";
 import StudioCategories from "@/components/home/StudioCategories";
-import CommunitySection from "@/components/home/CommunitySection";
+import HowItWorks from "@/components/home/HowItWorks";
+import AboutUsPage from "./about-us/page";
 
 export default function Home() {
   return (
@@ -15,7 +16,8 @@ export default function Home() {
         <FeaturedStudios />
       </Suspense>
       <StudioCategories />
-      <CommunitySection />
+      <HowItWorks />
+      <AboutUsPage />
     </div>
   );
 }
