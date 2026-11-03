@@ -11,6 +11,8 @@ import {
   Download,
   FileDown,
   LoaderCircle,
+  Mail,
+  UserRound,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -509,7 +511,13 @@ const MyBookingsPage = () => {
             </div>
 
             <div className="grid gap-4">
-              {bookings.map((booking) => (
+              {bookings.map((booking) => {
+                const isOwner =
+                  String(booking.ownerEmail ?? "")
+                    .trim()
+                    .toLowerCase() === user.email?.trim().toLowerCase();
+
+                return (
                 <div
                   key={booking._id}
                   className="group relative flex flex-col justify-between gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/40 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:items-center"
@@ -545,20 +553,42 @@ const MyBookingsPage = () => {
                       </span>
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
-                      Owner:{" "}
-                      <span className="font-medium text-foreground">
-                        {booking.ownerName}
-                      </span>{" "}
-                      ({booking.ownerEmail})
-                    </p>
+                    <div className="space-y-2 text-xs text-muted-foreground">
+                      <p>
+                        Owner:{" "}
+                        <span className="font-medium text-foreground">
+                          {booking.ownerName || "Studio owner"}
+                        </span>
+                      </p>
+                      <p className="flex items-start gap-1.5">
+                        <Mail className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                        <span className="break-all">{booking.ownerEmail}</span>
+                      </p>
+                      {isOwner && (
+                        <div className="border-t border-border pt-2 dark:border-zinc-800">
+                          <p className="font-semibold text-foreground">
+                            Booked by
+                          </p>
+                          <p className="mt-1 flex items-start gap-1.5">
+                            <UserRound className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                            <span className="break-all">
+                              {booking.customerName || "Guest Creator"}
+                            </span>
+                          </p>
+                          <p className="mt-1 flex items-start gap-1.5">
+                            <Mail className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                            <span className="break-all">
+                              {booking.customerEmail}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
                     {["Pending", "Confirmed"].includes(booking.status) &&
-                      String(booking.ownerEmail ?? "")
-                        .trim()
-                        .toLowerCase() === user.email?.trim().toLowerCase() && (
+                      isOwner && (
                         <Button
                           size="sm"
                           disabled={confirmingId === booking._id}
@@ -617,7 +647,8 @@ const MyBookingsPage = () => {
                     </Button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

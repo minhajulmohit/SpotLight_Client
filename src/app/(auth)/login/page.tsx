@@ -94,17 +94,16 @@ const LoginContent = () => {
     setFormError(null);
   };
 
-  const validate = (): FormErrors => {
+  const validate = (email: string, password: string): FormErrors => {
     const nextErrors: FormErrors = {};
-    const cleanEmail = values.email.trim();
+    const cleanEmail = email.trim();
     const isEmailValid = emailPattern.test(cleanEmail);
-    const password = values.password.trim() === "";
 
     if (!isEmailValid) {
       nextErrors.email = "Please enter a valid email address.";
     }
 
-    if (!password) {
+    if (!password.trim()) {
       nextErrors.password = "Please enter your password.";
     }
 
@@ -114,7 +113,10 @@ const LoginContent = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const nextErrors = validate();
+    const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const nextErrors = validate(email, password);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -125,8 +127,8 @@ const LoginContent = () => {
 
     try {
       const { error } = await authClient.signIn.email({
-        email: values.email.trim(),
-        password: values.password,
+        email: email.trim(),
+        password,
         rememberMe,
         callbackURL: callbackURL,
       });
