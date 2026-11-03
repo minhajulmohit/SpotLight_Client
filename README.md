@@ -1,97 +1,72 @@
-# SpotLight — Peer-to-Peer Creative Workspace & Production Studio Sharing Platform
+# SpotLight
 
-> **Live Website:** [https://spotlight-client.vercel.app](https://spotlight-client.vercel.app)  
-> **Server API:** [https://spotlightserver.vercel.app](https://spotlightserver.vercel.app)
+Live website: https://spotlight-client.vercel.app
 
----
+## Features
 
-## 📌 Project Overview
-**SpotLight** is a high-performance peer-to-peer marketplace designed for creators, filmmakers, photographers, poetasters, and musicians. Studio owners and hosts can list their creative spaces—ranging from photography cyc walls and cinema sound stages to podcast lounges, music recording suites, and art workshops. Fellow creators can discover, filter, inspect dynamic availability, and reserve studio slots with transparent pricing and real-time booking management.
+- Browse studio listings and explore featured spaces by category.
+- View studio details, pricing, amenities, and host information.
+- Register with email and password or sign in with Google.
+- Create, update, and delete your own studio listings.
+- Request bookings, check time-slot availability, and manage booking status.
+- Protect listing and booking actions with authenticated, HTTPOnly-cookie-based JWT authorization.
+- Switch between light and dark themes.
 
----
+## Tech Stack
 
-## 🚀 Key Features
+- Next.js App Router, React, TypeScript, and Tailwind CSS
+- Better Auth with MongoDB and Google OAuth
+- Express.js, MongoDB, and JWT authorization
+- Swiper, Sonner, and ImgBB
 
-* **Dynamic Studio Discovery & Filtering:** Browse production-ready spaces with real-time multi-criteria filtering by category (Photo Studio, Sound Stage, Film Stage, Podcast Lounge, Music Suite, Art Workshop), maximum hourly rate, minimum rating, and text search with instant URL query param synchronization.
-* **Complete Studio Management (CRUD):** Authenticated hosts can list new creative studios with ImgBB image uploading (banner + multi-image gallery carousel), manage their own listings via `/my-listings`, update workspace specs, and delete with interactive confirmation modals.
-* **JWT-Protected Mutations (Challenge 1):** Better Auth's JWT plugin issues a signed **EdDSA** token from the active session, and every protected Express request carries it as `Authorization: Bearer <jwt>`. The API verifies the signature against Better Auth's JWKS endpoint. Missing or invalid tokens receive `401 Unauthorized`, and non-owners receive `403 Forbidden`.
-* **Conflict-Free Booking System with Double-Booking Prevention:** Interactive booking modal with automatic hour and price calculation. Backend algorithm prevents overlapping reservations on identical time slots (returning HTTP 409 conflict).
-* **Host Guarantee & Creator Support (Platform Assurances):** Integrated trust framework covering $1M liability protection, verified creator/host profiles, equipment safety protocols, and 24/7 dedicated support.
-* **Downloadable PDF Booking Invoices:** Official receipts generated client-side with **jsPDF** — studio/host breakdown, schedule, hourly rate math, deposit and total — downloaded as `spotlight-invoice-<id>.pdf` without opening the browser print dialog.
-* **Comprehensive Light / Dark Theme Customization:** Instant toggle between light and dark modes with persisted user preference across all components, forms, and dialogs.
-* **Custom Creative 404 Experience:** Branded "Scene Not Found" error page with creative spotlight illustration and instant navigation back to the workspace catalog.
+## Local Setup
 
----
+Assuming `spotlight_client` and `spotlight_server` are in the same parent folder, install dependencies in each:
 
-## 🛠️ Tech Stack
+   ```bash
+   cd spotlight_client
+   npm install
+   cd ../spotlight_server
+   npm install
+   ```
 
-* **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Swiper 14 (hero slider), jsPDF (invoice export), Lucide React, Sonner Toast
-* **Authentication:** BetterAuth with MongoDB Adapter, persistent session storage, Google OAuth support, JWT plugin (EdDSA tokens verified by the Express API through JWKS)
-* **Backend:** Node.js, Express.js, MongoDB Atlas (Native Driver), CORS, dotenv
-* **Media Storage:** ImgBB Cloud API integration for direct photo uploads
+2. Create `spotlight_client/.env.local` with the following variables:
 
----
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   BETTER_AUTH_URL=http://localhost:3000
+   BETTER_AUTH_SECRET=your_random_secret
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
+   ```
 
-## 💻 Local Setup Steps
+3. Create `spotlight_server/.env`:
 
-### 1. Prerequisites
-* Node.js v20+ installed
-* Git installed
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   CLIENT_URL=http://localhost:3000
+   PORT=8000
+   ```
 
-### 2. Clone the Repositories
-```bash
-# Clone Client
-git clone https://github.com/minhajulmohit/SpotLight_Client.git
-cd SpotLight_Client
-npm install
-```
+4. From the shared parent folder, start the server and client in separate terminals:
 
-```bash
-# In a separate terminal, clone Server
-git clone https://github.com/minhajulmohit/SpotLight_Server.git
-cd SpotLight_Server
-npm install
-```
+   ```bash
+   cd spotlight_server
+   npm run dev
+   ```
 
-### 3. Environment Variables
-Create a `.env` file in `spotlight_client/`:
-```env
-MONGODB_URI=your_mongodb_connection_string
-NEXT_PUBLIC_API_URL=http://localhost:8000
-BETTER_AUTH_SECRET=your_better_auth_secret
-BETTER_AUTH_URL=http://localhost:3000
-NEXT_PUBLIC_IMGBB_API_KEY=c0379965d83626fa323fcf63e9f0298a
-```
+   ```bash
+   cd spotlight_client
+   npm run dev
+   ```
 
-Create a `.env` file in `spotlight_server/`:
-```env
-MONGODB_URI=your_mongodb_connection_string
-PORT=8000
-CLIENT_URL=http://localhost:3000
-```
-> `CLIENT_URL` must exactly match the client's `BETTER_AUTH_URL`; Express uses it to verify the JWT issuer/audience. API requests are forwarded by the existing `src/proxy.ts`. It stores the JWT in an HTTPOnly cookie and sends it to Express; browser JavaScript cannot read the token.
+   Open http://localhost:3000.
 
-### 4. Run Development Servers
-```bash
-# Run server
-cd spotlight_server
-npm run dev
-
-# Run client (in another terminal)
-cd spotlight_client
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## 🔑 Examiner Test Credentials
-
-Use these credentials to test host actions, private routes, and bookings:
+## Examiner Test Credentials
 
 | Role | Email | Password |
 |---|---|---|
-| **Host / Creator** | `examiner.test@spotlight.com` | `Spotlight2026!` |
-| **Demo User** | `creator.guest@spotlight.com` | `Creative2026!` |
-
-> *Note: You can also register a new account anytime with valid password validation (at least 6 characters, 1 uppercase, 1 lowercase letter).*
+| Host / Creator | `examiner.test@spotlight.com` | `Spotlight2026!` |
+| Demo User | `creator.guest@spotlight.com` | `Creative2026!` |
