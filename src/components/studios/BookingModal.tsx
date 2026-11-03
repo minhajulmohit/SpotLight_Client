@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 
-import type { StudioDetails } from "@/app/studios/[id]/page";
+import type { StudioDetails } from "@/app/studios/[id]/StudioDetailsClient";
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -94,9 +94,9 @@ const BookingModal = ({
     if (!open || !studioId || !bookingDate) return;
     const controller = new AbortController();
 
-    fetch(
-      `${API_BASE}/availability?studioId=${encodeURIComponent(studioId)}&bookingDate=${encodeURIComponent(bookingDate)}`,
-      { signal: controller.signal, cache: "no-store" },
+    apiFetch(
+      `/availability?studioId=${encodeURIComponent(studioId)}&bookingDate=${encodeURIComponent(bookingDate)}`,
+      { signal: controller.signal },
     )
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not check studio availability.");
@@ -132,7 +132,7 @@ const BookingModal = ({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE}/bookings`, {
+      const response = await apiFetch("/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

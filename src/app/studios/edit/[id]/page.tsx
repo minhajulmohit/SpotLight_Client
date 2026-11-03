@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -89,9 +89,8 @@ const EditStudioContent = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
+    apiFetch(`/all-studio/${(params.id)}`, {
       signal: controller.signal,
-      cache: "no-store",
     })
       .then(async (response) => {
         const data = await response.json();
@@ -247,7 +246,7 @@ const EditStudioContent = () => {
       const imageList = Array.from(
         new Set([form.imageUrl.trim(), ...gallery].filter(Boolean)),
       );
-      const response = await fetch(`${API_BASE}/all-studio/${encodeURIComponent(params.id)}`, {
+      const response = await apiFetch(`/all-studio/${encodeURIComponent(params.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -579,7 +578,7 @@ const EditStudioContent = () => {
             </CardContent>
           </Card>
 
-          {/* Read-only Host Info as required by Assignment Document */}
+          
           <Card className="dark:bg-zinc-900 dark:ring-zinc-800">
             <CardHeader>
               <CardTitle>Host Details (Read-only)</CardTitle>

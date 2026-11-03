@@ -5,8 +5,7 @@ import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
 
-const backendUrl =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const backendUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export const FeaturedStudiosSkeleton = () => (
   <section className="bg-background py-20 sm:py-24">
@@ -40,10 +39,9 @@ const FeaturedStudios = async () => {
   let error: string | null = null;
 
   try {
-    const response = await fetch(
-      new URL("/featured-studio", `${backendUrl}/`),
-      { next: { revalidate: 60 } },
-    );
+    const response = await fetch(`${backendUrl}/featured-studio`, {
+      next: { revalidate: 60 },
+    });
 
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);
@@ -52,7 +50,7 @@ const FeaturedStudios = async () => {
     const data = (await response.json()) as
       | StudioCardData[]
       | { studios?: StudioCardData[] };
-    studios = (Array.isArray(data) ? data : data.studios ?? []).slice(0, 6);
+    studios = (Array.isArray(data) ? data : (data.studios ?? [])).slice(0, 6);
   } catch (requestError: unknown) {
     error =
       requestError instanceof Error

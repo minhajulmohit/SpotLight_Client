@@ -36,15 +36,7 @@ const StudioCard = ({ studio }: StudioCardProps) => {
     studio.bannerImage ??
     "/studio-placeholder.jpg";
   const canOptimizeImage =
-    !image.startsWith("http") ||
-    /^https:\/\/(?:i\.ibb\.co|images\.unsplash\.com|media\.istockphoto\.com)\//i.test(
-      image,
-    );
-  const category =
-    studio.category?.trim().toLowerCase() === "workshop"
-      ? "Art Workshop"
-      : studio.category;
-
+    !image.startsWith("http") || image.startsWith("https://");
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
       <div className="relative aspect-video overflow-hidden bg-muted">
@@ -58,10 +50,10 @@ const StudioCard = ({ studio }: StudioCardProps) => {
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/60 to-transparent" />
-        
+
         {/* Category badge */}
         <span className="absolute top-3.5 left-3.5 rounded-full bg-background/95 px-3 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
-          {category}
+          {studio.category}
         </span>
 
         {/* Rating badge */}
@@ -87,7 +79,11 @@ const StudioCard = ({ studio }: StudioCardProps) => {
               / hr
             </span>
           </p>
-          <Button nativeButton={false} render={<Link href={`/studios/${studioId}`} />} className="mt-4 w-full">
+          <Button
+            nativeButton={false}
+            render={<Link href={`/studios/${studioId}`} />}
+            className="mt-4 w-full"
+          >
             View Details
           </Button>
         </div>

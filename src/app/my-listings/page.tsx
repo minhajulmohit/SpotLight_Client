@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,7 +38,6 @@ type Studio = {
   securityDeposit?: number;
   capacity?: number;
   hostEmail?: string;
-  ownerEmail?: string;
 };
 
 const MyListingsPage = () => {
@@ -54,40 +53,52 @@ const MyListingsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    let ignore = false;
+    let isMounted = true;
 
-    fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
-      .then((response) => {
+    const fetchStudios = async () => {
+      setIsLoading(true);
+
+      try {
+        const response = await apiFetch("/all-studio");
+
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
         }
-        return response.json();
-      })
-      .then((data) => {
-        if (ignore) return;
-        setStudios(Array.isArray(data) ? data : []);
-        setError(null);
-        setIsLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (ignore) return;
-        setError(
-          err instanceof Error ? err.message : "Could not load your studios.",
-        );
-        setIsLoading(false);
-      });
 
+        const data = await response.json();
+
+        if (isMounted) {
+          setStudios(Array.isArray(data) ? data : []);
+          setError(null);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          const message =
+            err instanceof Error ? err.message : "Could not load your studios.";
+          setError(message);
+        }
+      } finally {
+       
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchStudios();
+
+  
     return () => {
-      ignore = true;
+      isMounted = false;
     };
   }, [reloadKey]);
 
-  // Filter user-owned spaces (match hostEmail or ownerEmail)
+
   const myListings = useMemo(() => {
     if (!userEmail) return [];
     const currentEmail = userEmail.trim().toLowerCase();
     return studios.filter((studio) => {
-      const studioEmail = (studio.hostEmail || studio.ownerEmail || "").trim().toLowerCase();
+      const studioEmail = (studio.hostEmail || "").trim().toLowerCase();
       return studioEmail === currentEmail;
     });
   }, [studios, userEmail]);
@@ -104,10 +115,10 @@ const MyListingsPage = () => {
     setIsDeleting(true);
     const deletedTitle = deleteTarget.title;
     try {
-      const response = await fetch(`${API_BASE}/all-studio/${deleteTarget._id}`, {
+      const response = await apiFetch(`/all-studio/${deleteTarget._id}`, {
         method: "DELETE",
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json();
       if (!response.ok) {
         throw new Error(data?.message ?? "Studio could not be deleted.");
       }
@@ -119,7 +130,9 @@ const MyListingsPage = () => {
       toast.success(`"${deletedTitle}" has been deleted successfully.`);
     } catch (requestError) {
       toast.error(
-        requestError instanceof Error ? requestError.message : "Please try again."
+        requestError instanceof Error
+          ? requestError.message
+          : "Please try again.",
       );
     } finally {
       setIsDeleting(false);
@@ -140,7 +153,9 @@ const MyListingsPage = () => {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
           <AlertCircle className="size-7" />
         </div>
-        <h2 className="mt-4 font-heading text-2xl font-bold">Sign In Required</h2>
+        <h2 className="mt-4 font-heading text-2xl font-bold">
+          Sign In Required
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Please log in to your account to view and manage your studio listings.
         </p>
@@ -157,7 +172,7 @@ const MyListingsPage = () => {
 
   return (
     <div className="bg-background pb-20">
-      {/* Page Header */}
+   
       <section className="border-b border-border bg-muted/40 py-12 text-foreground dark:bg-zinc-950 dark:text-white sm:py-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -238,7 +253,8 @@ const MyListingsPage = () => {
               No Studio Listings Yet
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              You haven&apos;t listed any studios under your account ({user.email}). Publish your first creative space to start hosting!
+              You haven&apos;t listed any studios under your account (
+              {user.email}). Publish your first creative space to start hosting!
             </p>
             <Button
               nativeButton={false}
@@ -317,7 +333,7 @@ const MyListingsPage = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        
         <Dialog
           open={deleteTarget !== null}
           onOpenChange={(open) => {
@@ -328,8 +344,8 @@ const MyListingsPage = () => {
             <DialogHeader>
               <DialogTitle>Delete this studio?</DialogTitle>
               <DialogDescription>
-                &quot;{deleteTarget?.title}&quot; will be permanently removed from
-                your listings in MongoDB. This action cannot be undone.
+                &quot;{deleteTarget?.title}&quot; will be permanently removed
+                from your listings in MongoDB. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

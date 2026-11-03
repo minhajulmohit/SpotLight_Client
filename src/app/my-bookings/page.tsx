@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +26,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+type BookingStatus = "Confirmed" | "Pending" | "Completed" | "Cancelled";
 
 export type Booking = {
   _id: string;
@@ -42,14 +44,14 @@ export type Booking = {
   hourlyRate: number;
   securityDeposit: number;
   totalPrice: number;
-  status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
+  status: BookingStatus;
   createdAt?: string;
 };
 
 const money = (value: number) => `$${Number(value || 0).toFixed(2)}`;
 
 const statusTone: Record<
-  Booking["status"],
+  BookingStatus,
   { fill: [number, number, number]; text: [number, number, number] }
 > = {
   Confirmed: { fill: [209, 250, 229], text: [4, 120, 87] },
@@ -58,10 +60,6 @@ const statusTone: Record<
   Cancelled: { fill: [255, 228, 230], text: [190, 18, 60] },
 };
 
-/**
- * Builds and downloads a real PDF invoice (no browser print dialog), so the
- * receipt can be stored, emailed, or attached to an expense report.
- */
 const downloadInvoicePdf = async (booking: Booking) => {
   const { jsPDF } = await import("jspdf");
 
@@ -84,11 +82,7 @@ const downloadInvoicePdf = async (booking: Booking) => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(212, 212, 216);
-  doc.text(
-    "Creative Workspace & Production Studio Marketplace",
-    margin,
-    66,
-  );
+  doc.text("Creative Workspace & Production Studio Marketplace", margin, 66);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(255, 255, 255);
@@ -228,56 +222,59 @@ const downloadInvoicePdf = async (booking: Booking) => {
     margin,
     footerY + 18,
   );
-  doc.text(
-    `Booking reference: ${booking._id}`,
-    margin,
-    footerY + 32,
-  );
+  doc.text(`Booking reference: ${booking._id}`, margin, footerY + 32);
 
   doc.save(`spotlight-invoice-${booking._id.slice(-8)}.pdf`);
 };
 
-const getStatusBadge = (status: Booking["status"]) => {
-  switch (status) {
-    case "Confirmed":
-      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-    case "Pending":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
-    case "Completed":
-      return "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400";
-    case "Cancelled":
-      return "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400";
-    default:
-      return "border-zinc-500/30 bg-zinc-500/10 text-zinc-600";
+const getStatusBadge = (status: BookingStatus) => {
+  if (status === "Confirmed") {
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  } else if (status === "Pending") {
+    return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+  } else if (status === "Completed") {
+    return "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400";
+  } else if (status === "Cancelled") {
+    return "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400";
+  } else {
+    return "border-zinc-500/30 bg-zinc-500/10 text-zinc-600";
   }
 };
 
 const fetchBookings = async () => {
-  const [guestResponse, hostResponse] = await Promise.all([
-    fetch(`${API_BASE}/bookings`, { cache: "no-store" }),
-    fetch(`${API_BASE}/bookings?hostEmail=true`, { cache: "no-store" }),
-  ]);
-  const [guestData, hostData] = await Promise.all([
-    guestResponse.json(),
-    hostResponse.json(),
-  ]);
+  const guestResponse = await apiFetch("/bookings");
+  const guestData = await guestResponse.json();
+
+  const hostResponse = await apiFetch("/bookings?hostEmail=true");
+  const hostData = await hostResponse.json();
 
   if (!guestResponse.ok || !hostResponse.ok) {
     throw new Error("Failed to load bookings.");
   }
 
-  const uniqueBookings = new Map<string, Booking>();
-  for (const booking of [
-    ...(Array.isArray(guestData) ? guestData : []),
-    ...(Array.isArray(hostData) ? hostData : []),
-  ]) {
-    uniqueBookings.set(booking._id, booking);
+  const guestList = Array.isArray(guestData) ? guestData : [];
+  const hostList = Array.isArray(hostData) ? hostData : [];
+
+  const combinedList = [...guestList, ...hostList];
+
+  const uniqueList: Booking[] = [];
+
+  for (const booking of combinedList) {
+    const alreadyExists = uniqueList.some((item) => item._id === booking._id);
+
+    if (!alreadyExists) {
+      uniqueList.push(booking);
+    }
   }
-  return [...uniqueBookings.values()].sort(
-    (first, second) =>
-      new Date(second.createdAt ?? 0).getTime() -
-      new Date(first.createdAt ?? 0).getTime(),
-  );
+
+  uniqueList.sort((a, b) => {
+    const timeFirst = new Date(a.createdAt ?? 0).getTime();
+    const timeSecond = new Date(b.createdAt ?? 0).getTime();
+
+    return timeSecond - timeFirst;
+  });
+
+  return uniqueList;
 };
 
 const MyBookingsPage = () => {
@@ -288,8 +285,10 @@ const MyBookingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<Booking | null>(null);
-  const [selectedBookingForInvoice, setSelectedBookingForInvoice] = useState<Booking | null>(null);
+  const [selectedBookingForCancel, setSelectedBookingForCancel] =
+    useState<Booking | null>(null);
+  const [selectedBookingForInvoice, setSelectedBookingForInvoice] =
+    useState<Booking | null>(null);
 
   const refreshBookings = () => {
     setIsLoading(true);
@@ -329,28 +328,43 @@ const MyBookingsPage = () => {
 
   const handleCancelBooking = async () => {
     if (!selectedBookingForCancel) return;
+
     const bookingId = selectedBookingForCancel._id;
+
     setCancellingId(bookingId);
 
     try {
-      const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+      const response = await apiFetch(`/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await response.json().catch(() => ({}));
+
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message ?? "Could not cancel booking.");
+        const errorMessage = data.message || "Could not cancel booking.";
+        throw new Error(errorMessage);
       }
 
       toast.success("Booking cancelled successfully.");
-      // Update locally
-      setBookings((prev) =>
-        prev.map((b) => (b._id === bookingId ? { ...b, status: "Cancelled" } : b))
-      );
+
+      setBookings((currentBookings) => {
+        return currentBookings.map((singleBooking) => {
+          if (singleBooking._id === bookingId) {
+            return {
+              ...singleBooking,
+              status: "Cancelled",
+            };
+          }
+          return singleBooking;
+        });
+      });
+
       setSelectedBookingForCancel(null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel booking.");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to cancel booking.";
+      toast.error(message);
     } finally {
       setCancellingId(null);
     }
@@ -362,14 +376,11 @@ const MyBookingsPage = () => {
   ) => {
     setConfirmingId(booking._id);
     try {
-      const response = await fetch(
-        `${API_BASE}/bookings/${booking._id}/status`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        },
-      );
+      const response = await apiFetch(`/bookings/${booking._id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
       if (!response.ok) throw new Error("Could not update this booking.");
 
       setBookings((previous) =>
@@ -380,7 +391,9 @@ const MyBookingsPage = () => {
       toast.success(`Booking ${status.toLowerCase()}.`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not update this booking.",
+        error instanceof Error
+          ? error.message
+          : "Could not update this booking.",
       );
     } finally {
       setConfirmingId(null);
@@ -412,7 +425,9 @@ const MyBookingsPage = () => {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
           <AlertCircle className="size-7" />
         </div>
-        <h2 className="mt-4 font-heading text-2xl font-bold">Sign In Required</h2>
+        <h2 className="mt-4 font-heading text-2xl font-bold">
+          Sign In Required
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Please log in to your account to view and manage your studio bookings.
         </p>
@@ -439,7 +454,8 @@ const MyBookingsPage = () => {
             My Studio Bookings
           </h1>
           <p className="mt-2 text-sm text-muted-foreground dark:text-zinc-300">
-            Track your reserved studio sessions, inspect timing details, and download receipts.
+            Track your reserved studio sessions, inspect timing details, and
+            download receipts.
           </p>
         </div>
       </section>
@@ -466,7 +482,8 @@ const MyBookingsPage = () => {
               No Bookings Found
             </h3>
             <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              You haven&apos;t reserved any creative workspaces yet. Explore available studios and book your next session!
+              You haven&apos;t reserved any creative workspaces yet. Explore
+              available studios and book your next session!
             </p>
             <Button
               nativeButton={false}
@@ -482,12 +499,11 @@ const MyBookingsPage = () => {
         {!isLoading && bookings.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{bookings.length} {bookings.length === 1 ? "reservation" : "reservations"}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refreshBookings}
-              >
+              <span>
+                {bookings.length}{" "}
+                {bookings.length === 1 ? "reservation" : "reservations"}
+              </span>
+              <Button variant="outline" size="sm" onClick={refreshBookings}>
                 Refresh
               </Button>
             </div>
@@ -505,7 +521,7 @@ const MyBookingsPage = () => {
                       </h3>
                       <span
                         className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${getStatusBadge(
-                          booking.status
+                          booking.status,
                         )}`}
                       >
                         {booking.status}
@@ -519,23 +535,30 @@ const MyBookingsPage = () => {
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Clock className="size-4 text-primary" />
-                        {booking.startTime} - {booking.endTime} ({booking.totalHours} hrs)
+                        {booking.startTime} - {booking.endTime} (
+                        {booking.totalHours} hrs)
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <DollarSign className="size-4 text-primary" />
-                        ${booking.totalPrice.toFixed(2)} (${booking.hourlyRate}/hr)
+                        <DollarSign className="size-4 text-primary" />$
+                        {booking.totalPrice.toFixed(2)} (${booking.hourlyRate}
+                        /hr)
                       </span>
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      Host: <span className="font-medium text-foreground">{booking.hostName}</span> ({booking.hostEmail})
+                      Host:{" "}
+                      <span className="font-medium text-foreground">
+                        {booking.hostName}
+                      </span>{" "}
+                      ({booking.hostEmail})
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
                     {["Pending", "Confirmed"].includes(booking.status) &&
-                      String(booking.hostEmail ?? "").trim().toLowerCase() ===
-                        user.email?.trim().toLowerCase() && (
+                      String(booking.hostEmail ?? "")
+                        .trim()
+                        .toLowerCase() === user.email?.trim().toLowerCase() && (
                         <Button
                           size="sm"
                           disabled={confirmingId === booking._id}
@@ -600,7 +623,6 @@ const MyBookingsPage = () => {
         )}
       </main>
 
-      {/* Cancel Confirmation Modal */}
       <Dialog
         open={Boolean(selectedBookingForCancel)}
         onOpenChange={(open) => !open && setSelectedBookingForCancel(null)}
@@ -611,7 +633,8 @@ const MyBookingsPage = () => {
             <DialogDescription>
               Are you sure you want to cancel your reservation for{" "}
               <strong>{selectedBookingForCancel?.studioTitle}</strong> on{" "}
-              {selectedBookingForCancel?.bookingDate}? This action cannot be undone.
+              {selectedBookingForCancel?.bookingDate}? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
 
@@ -643,7 +666,7 @@ const MyBookingsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* PDF Booking Invoice Modal (Optional Requirement) */}
+      {/* PDF Booking Invoice*/}
       <Dialog
         open={Boolean(selectedBookingForInvoice)}
         onOpenChange={(open) => !open && setSelectedBookingForInvoice(null)}
@@ -662,19 +685,23 @@ const MyBookingsPage = () => {
           </DialogHeader>
 
           {selectedBookingForInvoice && (
-            <div id="printable-invoice" className="space-y-4 rounded-xl border border-border bg-card p-5 text-sm dark:border-zinc-800">
+            <div
+              id="printable-invoice"
+              className="space-y-4 rounded-xl border border-border bg-card p-5 text-sm dark:border-zinc-800"
+            >
               <div className="flex items-center justify-between border-b border-border pb-3 dark:border-zinc-800">
                 <div>
                   <h4 className="font-heading text-lg font-bold text-foreground">
                     {selectedBookingForInvoice.studioTitle}
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    Host: {selectedBookingForInvoice.hostName} ({selectedBookingForInvoice.hostEmail})
+                    Host: {selectedBookingForInvoice.hostName} (
+                    {selectedBookingForInvoice.hostEmail})
                   </p>
                 </div>
                 <span
                   className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${getStatusBadge(
-                    selectedBookingForInvoice.status
+                    selectedBookingForInvoice.status,
                   )}`}
                 >
                   {selectedBookingForInvoice.status}
@@ -684,14 +711,21 @@ const MyBookingsPage = () => {
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <p className="text-muted-foreground">Guest Creator</p>
-                  <p className="font-semibold text-foreground">{selectedBookingForInvoice.customerName}</p>
-                  <p className="text-muted-foreground">{selectedBookingForInvoice.customerEmail}</p>
+                  <p className="font-semibold text-foreground">
+                    {selectedBookingForInvoice.customerName}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {selectedBookingForInvoice.customerEmail}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Booking Date</p>
-                  <p className="font-semibold text-foreground">{selectedBookingForInvoice.bookingDate}</p>
+                  <p className="font-semibold text-foreground">
+                    {selectedBookingForInvoice.bookingDate}
+                  </p>
                   <p className="text-muted-foreground">
-                    {selectedBookingForInvoice.startTime} - {selectedBookingForInvoice.endTime}
+                    {selectedBookingForInvoice.startTime} -{" "}
+                    {selectedBookingForInvoice.endTime}
                   </p>
                 </div>
               </div>
@@ -699,15 +733,22 @@ const MyBookingsPage = () => {
               <div className="border-t border-border pt-3 dark:border-zinc-800">
                 <div className="flex justify-between py-1 text-xs">
                   <span className="text-muted-foreground">
-                    Rate (${selectedBookingForInvoice.hourlyRate}/hr × {selectedBookingForInvoice.totalHours} hrs)
+                    Rate (${selectedBookingForInvoice.hourlyRate}/hr ×{" "}
+                    {selectedBookingForInvoice.totalHours} hrs)
                   </span>
                   <span className="font-medium">
-                    ${(selectedBookingForInvoice.hourlyRate * selectedBookingForInvoice.totalHours).toFixed(2)}
+                    $
+                    {(
+                      selectedBookingForInvoice.hourlyRate *
+                      selectedBookingForInvoice.totalHours
+                    ).toFixed(2)}
                   </span>
                 </div>
                 {selectedBookingForInvoice.securityDeposit > 0 && (
                   <div className="flex justify-between py-1 text-xs">
-                    <span className="text-muted-foreground">Security Deposit (Refundable)</span>
+                    <span className="text-muted-foreground">
+                      Security Deposit (Refundable)
+                    </span>
                     <span className="font-medium">
                       ${selectedBookingForInvoice.securityDeposit.toFixed(2)}
                     </span>

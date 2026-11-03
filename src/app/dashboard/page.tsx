@@ -16,8 +16,12 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+
+interface Studio {
+  hostEmail?: string;
+}
 
 export default function DashboardPage() {
   const { data: session, isPending } = authClient.useSession();
@@ -31,41 +35,53 @@ export default function DashboardPage() {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
-    if (!isPending) {
-      if (user?.email) {
-        Promise.all([
-          fetch(`${API_BASE}/all-studio`, { cache: "no-store" })
-            .then((r) => r.json())
-            .catch(() => []),
-          fetch(`${API_BASE}/bookings`, { cache: "no-store" })
-            .then((r) => r.json())
-            .catch(() => []),
-          fetch(`${API_BASE}/bookings?hostEmail=true`, { cache: "no-store" })
-            .then((r) => r.json())
-            .catch(() => []),
-        ])
-          .then(([studiosData, bookingsData, hostBookingsData]) => {
-          const allStudios = Array.isArray(studiosData) ? studiosData : studiosData.studios ?? [];
-          const userStudios = allStudios.filter(
-            (s: { hostEmail?: string; ownerEmail?: string }) =>
-              s.hostEmail?.toLowerCase() === user.email?.toLowerCase() ||
-              s.ownerEmail?.toLowerCase() === user.email?.toLowerCase()
-          );
-          const allBookings = Array.isArray(bookingsData) ? bookingsData : [];
-          const hostBookings = Array.isArray(hostBookingsData) ? hostBookingsData : [];
-          const pendingBookings = hostBookings.filter(
-            (b: { status?: string }) => b.status === "Pending"
-          );
+    if (isPending || !user?.email) return;
 
-          setStats({
-            myStudiosCount: userStudios.length,
-            myBookingsCount: allBookings.length,
-            pendingBookingsCount: pendingBookings.length,
-          });
-          setIsLoadingStats(false);
+    const loadDashboardStats = async () => {
+      try {
+        const [studiosRes, myBookingsRes, hostBookingsRes] = await Promise.all([
+          apiFetch("/all-studio")
+            .then((r) => r.json())
+            .catch(() => []),
+          apiFetch("/bookings")
+            .then((r) => r.json())
+            .catch(() => []),
+          apiFetch("/bookings?hostEmail=true")
+            .then((r) => r.json())
+            .catch(() => []),
+        ]);
+
+        const allStudios = Array.isArray(studiosRes)
+          ? studiosRes
+          : (studiosRes.studios ?? []);
+        const currentEmail = user.email.toLowerCase();
+
+        const myStudios = allStudios.filter((studio: Studio) => {
+          const host = studio.hostEmail?.toLowerCase();
+
+          return host === currentEmail;
         });
+
+        const hostBookings = Array.isArray(hostBookingsRes)
+          ? hostBookingsRes
+          : [];
+        const pendingBookings = hostBookings.filter(
+          (b) => b.status === "Pending",
+        );
+
+        setStats({
+          myStudiosCount: myStudios.length,
+          myBookingsCount: Array.isArray(myBookingsRes)
+            ? myBookingsRes.length
+            : 0,
+          pendingBookingsCount: pendingBookings.length,
+        });
+      } finally {
+        setIsLoadingStats(false);
       }
-    }
+    };
+
+    loadDashboardStats();
   }, [user?.email, isPending]);
 
   if (isPending) {
@@ -82,7 +98,9 @@ export default function DashboardPage() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
           <AlertCircle className="size-7" />
         </div>
-        <h2 className="mt-4 font-heading text-2xl font-bold">Sign In Required</h2>
+        <h2 className="mt-4 font-heading text-2xl font-bold">
+          Sign In Required
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Please log in to your account to view your creator dashboard.
         </p>
@@ -154,7 +172,9 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <main className="container mx-auto px-4 py-10">
-        <h2 className="font-heading text-xl font-bold">Workspace &amp; Reservation Overview</h2>
+        <h2 className="font-heading text-xl font-bold">
+          Workspace &amp; Reservation Overview
+        </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-3">
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center justify-between">
@@ -227,7 +247,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Navigation Cards */}
-        <h2 className="mt-12 font-heading text-xl font-bold">Quick Navigation</h2>
+        <h2 className="mt-12 font-heading text-xl font-bold">
+          Quick Navigation
+        </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/my-listings"

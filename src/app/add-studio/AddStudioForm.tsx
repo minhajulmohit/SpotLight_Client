@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,8 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-
-const STUDIO_API_ENDPOINT = `${API_BASE}/add-new-studio`;
 
 const CATEGORIES = [
   "Photo Studio",
@@ -320,13 +318,12 @@ const AddStudioForm = () => {
       overview: form.overview.trim(),
       hostName: user?.name || "SpotLight Host",
       hostEmail: user?.email || "",
-      ownerEmail: user?.email || "",
     };
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(STUDIO_API_ENDPOINT, {
+      const response = await apiFetch("/add-new-studio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

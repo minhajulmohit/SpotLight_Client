@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Aperture, ArrowLeft, Clapperboard, Compass, Home, VideoOff } from "lucide-react";
+import { Aperture, Clapperboard, Compass, Home, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -8,7 +8,10 @@ export default function NotFound() {
       <div className="relative mx-auto flex size-32 items-center justify-center rounded-3xl border border-primary/20 bg-primary/10 shadow-inner sm:size-40">
         {/* Studio spotlight glow */}
         <div className="absolute inset-0 rounded-3xl bg-primary/10 blur-xl" />
-        <Aperture className="size-16 text-primary sm:size-20" strokeWidth={1.8} />
+        <Aperture
+          className="size-16 text-primary sm:size-20"
+          strokeWidth={1.8}
+        />
 
         {/* Small floating creative badges */}
         <span className="absolute -top-2 -right-2 flex size-9 items-center justify-center rounded-full border border-border bg-card shadow-sm dark:border-zinc-800">
@@ -28,8 +31,8 @@ export default function NotFound() {
       </h1>
 
       <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
-        The studio space or scene you are trying to reach doesn&apos;t exist, has been packed up,
-        or was moved to another sound stage.
+        The studio space or scene you are trying to reach doesn&apos;t exist,
+        has been packed up, or was moved to another sound stage.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -56,4 +59,3 @@ export default function NotFound() {
     </div>
   );
 }
-

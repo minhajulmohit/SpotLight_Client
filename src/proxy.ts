@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-// Routes that require authentication
+// যেসব Page Login ছাড়া দেখা যাবে না
 const protectedRoutes = [
   "/dashboard",
   "/add-studio",
@@ -11,36 +11,74 @@ const protectedRoutes = [
   "/studios/edit",
 ];
 
-// Routes accessible only to unauthenticated guests
+// যেসব Page শুধু Logout অবস্থায় দেখা যাবে
 const authRoutes = ["/login", "/register"];
 
 export async function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  // বর্তমানে কোন Page-এ আছি
+  const pathname = request.nextUrl.pathname;
 
-  // Check for Better Auth session token cookie (supports local and production SSL)
-  const sessionCookie =
-    getSessionCookie(request) ||
-    request.cookies.get("better-auth.session_token")?.value ||
-    request.cookies.get("__Secure-better-auth.session_token")?.value;
+  // URL-এর Query Parameter
+  const search = request.nextUrl.search;
 
-  const isAuthenticated = Boolean(sessionCookie);
+  // User-এর Login Session Cookie খুঁজে বের করা
+  let sessionCookie = getSessionCookie(request);
 
-  // 1. If trying to access a protected route without being logged in, redirect to login
-  const isProtected = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  if (!sessionCookie) {
+    const cookie = request.cookies.get("better-auth.session_token");
 
+    if (cookie) {
+      sessionCookie = cookie.value;
+    }
+  }
+
+  if (!sessionCookie) {
+    const cookie = request.cookies.get("__Secure-better-auth.session_token");
+
+    if (cookie) {
+      sessionCookie = cookie.value;
+    }
+  }
+
+  // Cookie থাকলে User-কে Login করা হিসেবে ধরা হচ্ছে
+  let isAuthenticated = false;
+
+  if (sessionCookie) {
+    isAuthenticated = true;
+  }
+
+  // Page Protected কি না পরীক্ষা
+  let isProtected = false;
+
+  for (const route of protectedRoutes) {
+    if (pathname === route || pathname.startsWith(route + "/")) {
+      isProtected = true;
+
+      break;
+    }
+  }
+
+  // Login না করা User Protected Page-এ গেলে Login Page-এ পাঠানো
   if (isProtected && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackURL", `${pathname}${search}`);
+
+    loginUrl.searchParams.set("callbackURL", pathname + search);
+
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. If logged in and trying to access /login or /register, redirect to dashboard
-  const isAuthRoute = authRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  // Login এবং Register Page পরীক্ষা
+  let isAuthRoute = false;
 
+  for (const route of authRoutes) {
+    if (pathname === route || pathname.startsWith(route + "/")) {
+      isAuthRoute = true;
+
+      break;
+    }
+  }
+
+  // Login করা User Login/Register Page-এ গেলে Dashboard-এ পাঠানো
   if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -48,19 +86,11 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-export default proxy;
-
+// কোন কোন Request-এর ক্ষেত্রে Proxy কাজ করবে
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (images, icons, etc.)
-     * - api routes (handled by backend or route handlers)
-     */
     "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
 
+export default proxy;

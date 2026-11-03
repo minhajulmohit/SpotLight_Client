@@ -37,70 +37,99 @@ const profileLinks = [
 const NavbarContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
   const pathname = usePathname();
+
   const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+
+  const sessionData = authClient.useSession();
+  const user = sessionData.data?.user;
 
   useEffect(() => {
-    if (!isProfileOpen) return;
+    if (isProfileOpen === false) {
+      return;
+    }
 
     const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
-      if (
-        profileMenuRef.current &&
-        target &&
-        !profileMenuRef.current.contains(target)
-      ) {
+      const target = event.target as Node;
+
+      if (!profileMenuRef.current) {
+        return;
+      }
+
+      if (!profileMenuRef.current.contains(target)) {
         setIsProfileOpen(false);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsProfileOpen(false);
+      if (event.key === "Escape") {
+        setIsProfileOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
+
     document.addEventListener("touchstart", handleOutsideClick);
+
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+
       document.removeEventListener("touchstart", handleOutsideClick);
+
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isProfileOpen]);
 
   const closeMenus = () => {
     setIsOpen(false);
+
     setIsProfileOpen(false);
   };
 
   const handleLogout = async () => {
     try {
       await authClient.signOut();
-    } finally {
-      closeMenus();
-      router.push("/");
-      router.refresh();
+    } catch (error) {
+      console.log("Logout failed", error);
     }
+
+    closeMenus();
+
+    router.push("/");
+
+    router.refresh();
   };
 
   const isLinkActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    if (href === "/studios") return pathname.startsWith("/studios");
-    if (href === "/#about-us" || href === "/about-us") return pathname === "/about-us";
-    if (href === "/#how-it-works" || href === "/how-it-works") return pathname === "/how-it-works";
-    return pathname === href;
+    if (href === "/") {
+      if (pathname === "/") {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    if (pathname === href) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
-  const linkClass = (href: string) =>
-    `relative py-2 text-sm font-medium tracking-wide transition-colors duration-200 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:origin-left after:rounded-full after:bg-primary after:transition-transform ${
-      isLinkActive(href)
-        ? "text-primary after:scale-x-100"
-        : "text-muted-foreground after:scale-x-0 hover:text-foreground hover:after:scale-x-100 dark:text-zinc-400 dark:hover:text-primary"
-    }`;
+  const linkClass = (href: string) => {
+    const commonClass = "relative py-2 text-sm font-medium tracking-wide";
+
+    if (isLinkActive(href)) {
+      return commonClass + " text-primary after:scale-x-100";
+    } else {
+      return commonClass + " text-muted-foreground after:scale-x-0";
+    }
+  };
 
   return (
     <div className="border-b border-border sticky top-0 z-50 bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/60 transition-colors duration-200 dark:border-zinc-800/80 dark:bg-zinc-950/80">
@@ -145,7 +174,11 @@ const NavbarContent = () => {
                 aria-label="Open profile menu"
               >
                 {user.image ? (
-                  <img src={user.image} alt="" className="size-8 rounded-full object-cover" />
+                  <img
+                    src={user.image}
+                    alt=""
+                    className="size-8 rounded-full object-cover"
+                  />
                 ) : (
                   <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <UserRound className="size-4" />
@@ -157,8 +190,12 @@ const NavbarContent = () => {
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-border bg-popover p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-border px-3 py-2.5 dark:border-zinc-800">
-                    <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                   </div>
                   <nav className="mt-2 space-y-1">
                     {profileLinks.map(({ href, label, icon: Icon }) => (
@@ -242,15 +279,23 @@ const NavbarContent = () => {
                 <>
                   <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3 dark:bg-zinc-800/60">
                     {user.image ? (
-                      <img src={user.image} alt="" className="size-10 rounded-full object-cover" />
+                      <img
+                        src={user.image}
+                        alt=""
+                        className="size-10 rounded-full object-cover"
+                      />
                     ) : (
                       <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                         <UserRound className="size-5" />
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{user.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      <p className="truncate text-sm font-semibold">
+                        {user.name}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
                   {profileLinks.map(({ href, label, icon: Icon }) => (
@@ -264,7 +309,11 @@ const NavbarContent = () => {
                       {label}
                     </Link>
                   ))}
-                  <Button variant="outline" className="text-destructive" onClick={handleLogout}>
+                  <Button
+                    variant="outline"
+                    className="text-destructive"
+                    onClick={handleLogout}
+                  >
                     <LogOut />
                     Logout
                   </Button>

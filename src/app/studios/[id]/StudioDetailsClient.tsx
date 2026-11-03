@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import {
   CalendarDays,
@@ -60,14 +60,18 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const images = useMemo(() => {
-    const values = studio.images?.length
-      ? studio.images
-      : [studio.imageUrl, studio.image, studio.bannerImage].filter(
-          (value): value is string => Boolean(value),
-        );
-    return values.length ? values : ["/studio-placeholder.jpg"];
-  }, [studio]);
+  let images: string[] = [];
+
+  if (studio.images && studio.images.length > 0) {
+    images = studio.images;
+  } else {
+    const fallbackList = [studio.imageUrl, studio.image, studio.bannerImage];
+    images = fallbackList.filter(Boolean) as string[];
+  }
+
+  if (images.length === 0) {
+    images = ["/studio-placeholder.jpg"];
+  }
 
   const hourlyRate = studio.hourlyRate ?? studio.rate ?? 0;
   const securityDeposit = studio.securityDeposit ?? studio.deposit ?? 0;
@@ -78,12 +82,11 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
     studio.host?.name ?? studio.hostName ?? "SpotLight Studio Host";
   const hostEmail = studio.host?.email ?? studio.hostEmail;
   const hostInitial = hostName.trim().charAt(0).toUpperCase() || "S";
-  const description =
-    studio.overview ??
-    studio.description ??
-    "This creative workspace is thoughtfully equipped for productions, photography sessions, rehearsals, and private creative events.";
+  const description = studio.overview ?? studio.description;
   const moveImage = (direction: number) =>
-    setSelectedImage((current) => (current + direction + images.length) % images.length);
+    setSelectedImage(
+      (current) => (current + direction + images.length) % images.length,
+    );
 
   return (
     <div className="bg-background pb-20">
@@ -132,7 +135,14 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
                 className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition ${selectedImage === index ? "border-amber-400" : "border-transparent opacity-70 hover:opacity-100"}`}
                 aria-label={`Show image ${index + 1}`}
               >
-                <Image src={image} alt="" fill unoptimized={image.startsWith("http")} className="object-cover" sizes="96px" />
+                <Image
+                  src={image}
+                  alt=""
+                  fill
+                  unoptimized={image.startsWith("http")}
+                  className="object-cover"
+                  sizes="96px"
+                />
               </button>
             ))}
           </div>
@@ -149,7 +159,9 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
                 {rating > 0 ? rating.toFixed(1) : "New"}
               </span>
             </div>
-            <h1 className="mt-4 font-heading text-3xl font-bold sm:text-5xl">{studio.title}</h1>
+            <h1 className="mt-4 font-heading text-3xl font-bold sm:text-5xl">
+              {studio.title}
+            </h1>
             <p className="mt-3 flex items-center gap-2 text-muted-foreground">
               <MapPin className="size-5 text-amber-500" />
               {studio.location ?? "Location available on booking"}
@@ -157,13 +169,30 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
-                { icon: Clock3, label: "Hourly rate", value: `$${hourlyRate}/hr` },
-                { icon: ShieldCheck, label: "Security deposit", value: `$${securityDeposit}` },
-                { icon: UsersRound, label: "Maximum capacity", value: `${capacity} people` },
+                {
+                  icon: Clock3,
+                  label: "Hourly rate",
+                  value: `$${hourlyRate}/hr`,
+                },
+                {
+                  icon: ShieldCheck,
+                  label: "Security deposit",
+                  value: `$${securityDeposit}`,
+                },
+                {
+                  icon: UsersRound,
+                  label: "Maximum capacity",
+                  value: `${capacity} people`,
+                },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="rounded-xl border border-border bg-card p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <div
+                  key={label}
+                  className="rounded-xl border border-border bg-card p-5 dark:border-zinc-800 dark:bg-zinc-900"
+                >
                   <Icon className="size-5 text-amber-500" />
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {label}
+                  </p>
                   <p className="mt-1 text-lg font-bold">{value}</p>
                 </div>
               ))}
@@ -174,24 +203,37 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
               {amenities.length ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {amenities.map((amenity) => (
-                    <span key={amenity} className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm font-medium">
+                    <span
+                      key={amenity}
+                      className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm font-medium"
+                    >
                       <CheckCircle2 className="size-4 text-amber-500" />
                       {amenity}
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No amenities have been listed for this studio.</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No amenities have been listed for this studio.
+                </p>
               )}
             </section>
 
             <section className="mt-10">
-              <h2 className="font-heading text-2xl font-bold">About this workspace</h2>
-              <p className="mt-4 leading-7 text-muted-foreground">{description}</p>
+              <h2 className="font-heading text-2xl font-bold">
+                About this workspace
+              </h2>
+              <p className="mt-4 leading-7 text-muted-foreground">
+                {description}
+              </p>
               {studio.rules && (
                 <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                  <h3 className="font-heading text-lg font-semibold">Studio rules</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{studio.rules}</p>
+                  <h3 className="font-heading text-lg font-semibold">
+                    Studio rules
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {studio.rules}
+                  </p>
                 </div>
               )}
             </section>
@@ -207,7 +249,11 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
                 </div>
                 <div>
                   <p className="font-semibold">{hostName}</p>
-                  {hostEmail && <p className="mt-1 text-sm text-muted-foreground">{hostEmail}</p>}
+                  {hostEmail && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {hostEmail}
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -217,12 +263,25 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
               {studio.reviews?.length ? (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   {studio.reviews.map((review, index) => (
-                    <article key={review._id ?? `${review.user ?? review.name}-${index}`} className="rounded-xl border border-border p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                    <article
+                      key={
+                        review._id ?? `${review.user ?? review.name}-${index}`
+                      }
+                      className="rounded-xl border border-border p-5 dark:border-zinc-800 dark:bg-zinc-900"
+                    >
                       <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 font-semibold"><UserRound className="size-4 text-amber-500" />{review.name ?? review.user ?? "Verified guest"}</div>
-                        <span className="flex items-center gap-1 text-sm font-semibold"><Star className="size-4 fill-amber-400 text-amber-400" />{Number(review.rating ?? 0).toFixed(1)}</span>
+                        <div className="flex items-center gap-2 font-semibold">
+                          <UserRound className="size-4 text-amber-500" />
+                          {review.name ?? review.user ?? "Verified guest"}
+                        </div>
+                        <span className="flex items-center gap-1 text-sm font-semibold">
+                          <Star className="size-4 fill-amber-400 text-amber-400" />
+                          {Number(review.rating ?? 0).toFixed(1)}
+                        </span>
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{review.comment ?? review.review}</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {review.comment ?? review.review}
+                      </p>
                     </article>
                   ))}
                 </div>
@@ -236,13 +295,32 @@ const StudioDetailsClient = ({ studio }: { studio: StudioDetails }) => {
 
           <aside>
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-24 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-sm font-medium text-muted-foreground">Workspace price</p>
-              <p className="mt-1 font-heading text-4xl font-bold text-amber-500">${hourlyRate}<span className="text-base font-medium text-muted-foreground"> / hr</span></p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Workspace price
+              </p>
+              <p className="mt-1 font-heading text-4xl font-bold text-amber-500">
+                ${hourlyRate}
+                <span className="text-base font-medium text-muted-foreground">
+                  {" "}
+                  / hr
+                </span>
+              </p>
               <div className="mt-6 space-y-3 border-y border-border py-5 text-sm dark:border-zinc-800">
-                <div className="flex justify-between"><span className="text-muted-foreground">Hourly rate</span><span className="font-semibold">${hourlyRate}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Security deposit</span><span className="font-semibold">${securityDeposit}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Hourly rate</span>
+                  <span className="font-semibold">${hourlyRate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Security deposit
+                  </span>
+                  <span className="font-semibold">${securityDeposit}</span>
+                </div>
               </div>
-              <Button className="mt-6 w-full bg-amber-400 text-zinc-950 hover:bg-amber-300 dark:text-zinc-950" onClick={() => setBookingOpen(true)}>
+              <Button
+                className="mt-6 w-full bg-amber-400 text-zinc-950 hover:bg-amber-300 dark:text-zinc-950"
+                onClick={() => setBookingOpen(true)}
+              >
                 <CalendarDays />
                 Book Workspace Now
               </Button>

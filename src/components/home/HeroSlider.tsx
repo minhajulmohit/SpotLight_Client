@@ -21,8 +21,8 @@ const slides: Slide[] = [
     id: 1,
     title: (
       <>
-        Bring Your{" "}
-        <span className="text-amber-400">Cinematic Vision</span> to Life
+        Bring Your <span className="text-amber-400">Cinematic Vision</span> to
+        Life
       </>
     ),
     subtext:
@@ -39,7 +39,7 @@ const slides: Slide[] = [
       </>
     ),
     subtext:
-      "Explore curated photo lofts equipped with professional Profoto lighting, seamless backdrops, and vanity rooms.",
+      "Explore curated photo lofts equipped with professional lighting, seamless backdrops, and vanity rooms.",
     image:
       "https://media.istockphoto.com/id/1329518145/photo/photo-studio-interior.webp?a=1&b=1&s=612x612&w=0&k=20&c=JqMYftQvse3qXeyPX7FrwkTblNYS8AG7-ZhYAl4ajSM=",
   },
@@ -90,7 +90,11 @@ const HeroSlider = () => {
         className="h-full"
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={slide.id} className="h-full" aria-label={`${index + 1} of ${slides.length}`}>
+          <SwiperSlide
+            key={slide.id}
+            className="h-full"
+            aria-label={`${index + 1} of ${slides.length}`}
+          >
             <Image
               src={slide.image}
               alt=""

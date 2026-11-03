@@ -8,7 +8,7 @@ import StudioCard, {
   type StudioCardData,
 } from "@/components/studios/StudioCard";
 import { Button } from "@/components/ui/button";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 const DEFAULT_CATEGORIES = [
   "Photo Studio",
@@ -19,43 +19,22 @@ const DEFAULT_CATEGORIES = [
   "Art Workshop",
 ];
 
-const toStudioList = (
-  data: StudioCardData[] | { studios?: StudioCardData[] },
-) => (Array.isArray(data) ? data : data.studios ?? []);
-
-const normalizeCategory = (value: string) => {
-  const trimmed = value.trim().toLowerCase();
-  if (trimmed === "workshop" || trimmed === "workshops") return "art workshop";
-  return trimmed
-    .replace(/&/g, "and")
-    .replace(/[-_/]/g, " ")
-    .replace(/\b(photos?|studios?|rooms?|lounges?|stages?|suites?|workshops?)\b/g, (word) =>
-      word,
-    )
-    .replace(/\s+/g, " ");
-};
-
-const categoriesMatch = (studioCategory: string, selectedCategory: string) => {
-  if (!selectedCategory || normalizeCategory(selectedCategory) === "all categories") {
-    return true;
+function toStudioList(data: unknown): StudioCardData[] {
+  if (Array.isArray(data)) {
+    return data as StudioCardData[];
   }
-  const studio = normalizeCategory(studioCategory);
-  const selected = normalizeCategory(selectedCategory);
-  const aliases: Record<string, string[]> = {
-    "photo studio": ["photo studios", "photo", "photography studio", "photography studios"],
-    "sound stage": ["film video", "sound stages", "film studio", "video studio"],
-    "film stage": ["film video", "film studio", "video studio"],
-    "podcast lounge": ["podcast rooms", "podcast", "podcast studio"],
-    "music suite": ["recording studios", "music suites", "recording studio", "music studio"],
-    "art workshop": ["creative offices", "live events", "art workshops", "creative office"],
-  };
-  return (
-    studio === selected ||
-    studio.includes(selected) ||
-    selected.includes(studio) ||
-    (aliases[studio] ?? []).includes(selected)
-  );
-};
+
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "studios" in data &&
+    Array.isArray(data.studios)
+  ) {
+    return data.studios as StudioCardData[];
+  }
+
+  return [];
+}
 
 const StudiosContent = () => {
   const searchParams = useSearchParams();
@@ -70,7 +49,6 @@ const StudiosContent = () => {
   const [sort, setSort] = useState("recommended");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Sync state when URL search params change (e.g. clicking category link from Home)
   useEffect(() => {
     startTransition(() => {
       setCategory(searchParams.get("category") ?? "");
@@ -82,100 +60,144 @@ const StudiosContent = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    fetch(`${API_BASE}/all-studio`, { signal: controller.signal, cache: "no-store" })
-      .then(async (response) => {
+    let isMounted = true;
+    const fetchStudios = async () => {
+      setIsLoading(true);
+      try {
+        const response = await apiFetch("/all-studio");
         const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message ?? "Studios could not be loaded.");
-        }
-        setStudios(toStudioList(data));
-      })
-      .catch((requestError: unknown) => {
-        if (
-          requestError instanceof DOMException &&
-          requestError.name === "AbortError"
-        ) {
-          return;
-        }
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Studios could not be loaded.",
-        );
-      })
-      .finally(() => setIsLoading(false));
 
-    return () => controller.abort();
+        if (!response.ok) {
+          throw new Error(data.message || "Studios could not be loaded.");
+        }
+
+        if (isMounted) {
+          setStudios(toStudioList(data));
+          setError(null);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          const message =
+            err instanceof Error ? err.message : "Studios could not be loaded.";
+          setError(message);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchStudios();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const categories = useMemo(() => {
-    const sanitized = studios
-      .map((studio) => {
-        const cat = studio.category?.trim();
-        if (!cat) return "";
-        if (cat.toLowerCase() === "workshop" || cat.toLowerCase() === "workshops") {
-          return "Art Workshop";
-        }
-        return cat;
-      })
-      .filter(
-        (category) =>
-          category && normalizeCategory(category) !== "all categories",
-      );
+  const getCategories = () => {
+    const allCategories: string[] = [];
 
-    return [
-      ...new Map(
-        [...DEFAULT_CATEGORIES, ...sanitized].map((item) => [
-          normalizeCategory(item),
-          item,
-        ]),
-      ).values(),
-    ].sort();
-  }, [studios]);
+    for (const category of DEFAULT_CATEGORIES) {
+      allCategories.push(category);
+    }
 
-  const filteredStudios = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const selectedLocation = location.trim().toLowerCase();
-    const rateLimit = Number(maxRate);
-    const ratingLimit = Number(minRating);
-
-    const result = studios.filter((studio) => {
-      const rate = studio.hourlyRate ?? studio.rate ?? 0;
-      const rating = studio.rating ?? 0;
-      return (
-        (!query ||
-          `${studio.title} ${studio.category} ${studio.location}`
-            .toLowerCase()
-            .includes(query)) &&
-        categoriesMatch(studio.category, category) &&
-        (!selectedLocation ||
-          studio.location.toLowerCase().includes(selectedLocation)) &&
-        (!rateLimit || rate <= rateLimit) &&
-        (!ratingLimit || rating >= ratingLimit)
-      );
-    });
-
-    return [...result].sort((first, second) => {
-      if (sort === "price-low") {
-        return (
-          (first.hourlyRate ?? first.rate ?? 0) -
-          (second.hourlyRate ?? second.rate ?? 0)
-        );
+    for (const studio of studios) {
+      if (studio.category) {
+        allCategories.push(studio.category);
       }
-      if (sort === "price-high") {
-        return (
-          (second.hourlyRate ?? second.rate ?? 0) -
-          (first.hourlyRate ?? first.rate ?? 0)
-        );
+    }
+
+    const uniqueCategories: string[] = [];
+
+    for (const category of allCategories) {
+      if (!uniqueCategories.includes(category)) {
+        uniqueCategories.push(category);
       }
-      if (sort === "rating") {
-        return (second.rating ?? 0) - (first.rating ?? 0);
+    }
+
+    uniqueCategories.sort();
+
+    return uniqueCategories;
+  };
+
+  const categories = getCategories();
+
+  const filteredStudios = studios.filter((studio) => {
+    const rate = studio.hourlyRate ?? studio.rate ?? 0;
+    const rating = studio.rating ?? 0;
+
+    let searchMatch = true;
+
+    if (search !== "") {
+      const studioInfo =
+        studio.title + " " + studio.category + " " + studio.location;
+
+      if (!studioInfo.toLowerCase().includes(search.trim().toLowerCase())) {
+        searchMatch = false;
       }
-      return 0;
-    });
-  }, [category, location, maxRate, minRating, search, sort, studios]);
+    }
+
+    let categoryMatch = true;
+
+    if (category !== "") {
+      if (studio.category !== category) {
+        categoryMatch = false;
+      }
+    }
+
+    let locationMatch = true;
+
+    if (location !== "") {
+      if (
+        !studio.location.toLowerCase().includes(location.trim().toLowerCase())
+      ) {
+        locationMatch = false;
+      }
+    }
+
+    let rateMatch = true;
+
+    if (maxRate !== "") {
+      if (rate > Number(maxRate)) {
+        rateMatch = false;
+      }
+    }
+
+    let ratingMatch = true;
+
+    if (minRating !== "") {
+      if (rating < Number(minRating)) {
+        ratingMatch = false;
+      }
+    }
+
+    return (
+      searchMatch && categoryMatch && locationMatch && rateMatch && ratingMatch
+    );
+  });
+
+  filteredStudios.sort((a, b) => {
+    if (sort === "price-low") {
+      const firstRate = a.hourlyRate ?? a.rate ?? 0;
+      const secondRate = b.hourlyRate ?? b.rate ?? 0;
+
+      return firstRate - secondRate;
+    }
+
+    if (sort === "price-high") {
+      const firstRate = a.hourlyRate ?? a.rate ?? 0;
+      const secondRate = b.hourlyRate ?? b.rate ?? 0;
+
+      return secondRate - firstRate;
+    }
+
+    if (sort === "rating") {
+      return (b.rating ?? 0) - (a.rating ?? 0);
+    }
+
+    return 0;
+  });
 
   const resetFilters = () => {
     setSearch("");
@@ -228,7 +250,9 @@ const StudiosContent = () => {
           >
             <option value="">All categories</option>
             {categories.map((item) => (
-              <option key={item} value={item}>{item}</option>
+              <option key={item} value={item}>
+                {item}
+              </option>
             ))}
           </select>
           <Button
@@ -307,7 +331,10 @@ const StudiosContent = () => {
         {isLoading && (
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="overflow-hidden rounded-xl border border-border dark:border-zinc-800">
+              <div
+                key={index}
+                className="overflow-hidden rounded-xl border border-border dark:border-zinc-800"
+              >
                 <div className="aspect-video animate-pulse bg-zinc-200 dark:bg-zinc-800" />
                 <div className="space-y-3 p-5">
                   <div className="h-5 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
@@ -320,14 +347,27 @@ const StudiosContent = () => {
         )}
 
         {!isLoading && error && (
-          <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-10 text-center text-sm text-destructive">{error}</div>
+          <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-10 text-center text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         {!isLoading && !error && filteredStudios.length === 0 && (
           <div className="mt-6 rounded-xl border border-dashed border-border p-12 text-center dark:border-zinc-800">
-            <p className="font-heading text-xl font-semibold">No matching studios</p>
-            <p className="mt-2 text-sm text-muted-foreground">Try adjusting or resetting your filters.</p>
-            <Button type="button" variant="outline" onClick={resetFilters} className="mt-5">Reset filters</Button>
+            <p className="font-heading text-xl font-semibold">
+              No matching studios
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try adjusting or resetting your filters.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="mt-5"
+            >
+              Reset filters
+            </Button>
           </div>
         )}
 
@@ -347,7 +387,11 @@ const StudiosContent = () => {
 };
 
 const StudiosPage = () => (
-  <Suspense fallback={<div className="container mx-auto px-4 py-20">Loading studios...</div>}>
+  <Suspense
+    fallback={
+      <div className="container mx-auto px-4 py-20">Loading studios...</div>
+    }
+  >
     <StudiosContent />
   </Suspense>
 );
