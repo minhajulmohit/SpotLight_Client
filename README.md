@@ -23,12 +23,10 @@ Live website: https://spotlight-client.vercel.app
 
 Assuming `spotlight_client` and `spotlight_server` are in the same parent folder, install dependencies in each:
 
-   ```bash
-   cd spotlight_client
-   npm install
-   cd ../spotlight_server
-   npm install
-   ```
+```bash
+cd spotlight_client
+npm install
+```
 
 2. Create `spotlight_client/.env.local` with the following variables:
 
@@ -42,20 +40,7 @@ Assuming `spotlight_client` and `spotlight_server` are in the same parent folder
    NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
    ```
 
-3. Create `spotlight_server/.env`:
-
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   CLIENT_URL=http://localhost:3000
-   PORT=8000
-   ```
-
-4. From the shared parent folder, start the server and client in separate terminals:
-
-   ```bash
-   cd spotlight_server
-   npm run dev
-   ```
+3. From the shared parent folder, start the server and client in separate terminals:
 
    ```bash
    cd spotlight_client
@@ -66,7 +51,8 @@ Assuming `spotlight_client` and `spotlight_server` are in the same parent folder
 
 ## Examiner Test Credentials
 
-| Role | Email | Password |
-|---|---|---|
+| Role           | Email                         | Password         |
+| -------------- | ----------------------------- | ---------------- |
 | Host / Creator | `examiner.test@spotlight.com` | `Spotlight2026!` |
-| Demo User | `creator.guest@spotlight.com` | `Creative2026!` |
+| Demo User      | `creator.guest@spotlight.com` | `Creative2026!`  |
+
