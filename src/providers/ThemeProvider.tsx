@@ -1,42 +1,17 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import type { ReactNode } from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-type Theme = "light" | "dark";
-
-type ThemeContextValue = {
-  toggleTheme: () => void;
-};
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-export default function ThemeProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-
-  const toggleTheme = () => {
-    const root = document.documentElement;
-    const next: Theme = root.classList.contains("dark") ? "light" : "dark";
-
-    root.classList.toggle("dark", next === "dark");
-    localStorage.setItem("theme", next);
-  };
-
+export default function ThemeProvider({ children }: { children: ReactNode }) {
   return (
-    <ThemeContext.Provider value={{ toggleTheme }}>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      enableColorScheme
+    >
       {children}
-    </ThemeContext.Provider>
+    </NextThemesProvider>
   );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    throw new Error("useTheme must be used inside <ThemeProvider>");
-  }
-
-  return context;
 }

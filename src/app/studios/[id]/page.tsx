@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import StudioDetailsClient, { type StudioDetails } from "./StudioDetailsClient";
+import { Suspense } from "react";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -30,12 +31,14 @@ async function getStudio(id: string): Promise<StudioDetails> {
   }
 }
 
-
 export default async function StudioDetailsPage({ params }: PageProps) {
-  
   const { id } = await params;
 
   const studio = await getStudio(id);
 
-  return <StudioDetailsClient studio={studio} />;
+  return (
+    <Suspense fallback={<p className="text-gray-500">Loading...</p>}>
+      <StudioDetailsClient studio={studio} />
+    </Suspense>
+  );
 }

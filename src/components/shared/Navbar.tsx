@@ -99,17 +99,12 @@ const NavbarContent = () => {
         throw new Error(result.error.message ?? "Logout failed.");
       }
 
-      const response = await fetch("/api/auth/api-token", {
-        method: "DELETE",
-        credentials: "same-origin",
-      });
-      if (!response.ok) {
-        throw new Error("Could not clear the secure API session.");
-      }
-
       toast.success("You have been logged out.");
       closeMenus();
-      router.push("/");
+      router.push("/", {
+        scroll: true,
+      });
+
       router.refresh();
     } catch (error) {
       toast.error(
@@ -150,7 +145,7 @@ const NavbarContent = () => {
     <div className="border-b border-border sticky top-0 z-50 bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/60 transition-colors duration-200 dark:border-zinc-800/80 dark:bg-zinc-950/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" aria-label="SpotLight home">
+        <Link href="/" aria-label="SpotLight home" scroll={true}>
           <div>
             <h1 className="flex text-2xl sm:text-3xl font-bold items-center text-foreground transition-colors duration-200 dark:text-zinc-50">
               Sp
@@ -168,7 +163,7 @@ const NavbarContent = () => {
         <ul className="hidden lg:flex items-center gap-5">
           {navLinks.map(({ href, label }) => (
             <li key={href}>
-              <Link href={href} className={linkClass(href)}>
+              <Link href={href} className={linkClass(href)} scroll={true}>
                 {label}
               </Link>
             </li>
@@ -215,6 +210,7 @@ const NavbarContent = () => {
                   <nav className="mt-2 space-y-1">
                     {profileLinks.map(({ href, label, icon: Icon }) => (
                       <Link
+                        scroll={true}
                         key={href}
                         href={href}
                         onClick={closeMenus}
@@ -241,14 +237,14 @@ const NavbarContent = () => {
               <Button
                 variant="outline"
                 nativeButton={false}
-                render={<Link href="/login" />}
+                render={<Link href="/login" scroll={true} />}
                 className="transition-colors duration-200 dark:border-primary/60 dark:text-primary dark:hover:bg-primary/10"
               >
                 Login
               </Button>
               <Button
                 nativeButton={false}
-                render={<Link href="/register" />}
+                render={<Link href="/register" scroll={true} />}
                 className="transition-colors duration-200"
               >
                 Register
@@ -280,6 +276,7 @@ const NavbarContent = () => {
               {navLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link
+                    scroll={true}
                     href={href}
                     onClick={closeMenus}
                     className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary dark:text-zinc-100 dark:hover:bg-zinc-800/70"
@@ -315,6 +312,7 @@ const NavbarContent = () => {
                   </div>
                   {profileLinks.map(({ href, label, icon: Icon }) => (
                     <Link
+                      scroll={true}
                       key={href}
                       href={href}
                       onClick={closeMenus}
@@ -338,14 +336,22 @@ const NavbarContent = () => {
                   <Button
                     variant="outline"
                     nativeButton={false}
-                    render={<Link href="/login" onClick={closeMenus} />}
+                    render={
+                      <Link href="/login" scroll={true} onClick={closeMenus} />
+                    }
                     className="w-full dark:border-primary/60 dark:text-primary dark:hover:bg-primary/10"
                   >
                     Login
                   </Button>
                   <Button
                     nativeButton={false}
-                    render={<Link href="/register" onClick={closeMenus} />}
+                    render={
+                      <Link
+                        href="/register"
+                        scroll={true}
+                        onClick={closeMenus}
+                      />
+                    }
                     className="w-full"
                   >
                     Register

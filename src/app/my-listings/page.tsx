@@ -118,9 +118,11 @@ const MyListingsPage = () => {
       const response = await apiFetch(`/api/studios/${deleteTarget._id}`, {
         method: "DELETE",
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.message ?? "Studio could not be deleted.");
+        throw new Error(
+          data?.message ?? data?.msg ?? "Studio could not be deleted.",
+        );
       }
 
       setStudios((prev) =>

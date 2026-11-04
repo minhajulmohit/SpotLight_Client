@@ -118,6 +118,7 @@ const HeroSlider = () => {
 
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
+                    scroll={true}
                     href="/studios"
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-amber-400 px-6 text-sm font-semibold text-zinc-950 transition-colors duration-200 hover:bg-amber-500"
                   >
@@ -125,6 +126,7 @@ const HeroSlider = () => {
                     <ArrowRight className="size-4" />
                   </Link>
                   <Link
+                    scroll={true}
                     href="/studios"
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-colors duration-200 hover:border-amber-400/60 hover:bg-white/20 hover:text-amber-400"
                   >

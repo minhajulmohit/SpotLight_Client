@@ -18,6 +18,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Studio {
   ownerEmail?: string;
@@ -39,17 +40,24 @@ export default function DashboardPage() {
 
     const loadDashboardStats = async () => {
       try {
-        const [studiosRes, myBookingsRes, ownerBookingsRes] = await Promise.all([
-          apiFetch("/api/studios")
-            .then((r) => r.json())
-            .catch(() => []),
-          apiFetch("/api/bookings")
-            .then((r) => r.json())
-            .catch(() => []),
-          apiFetch("/api/bookings?ownerEmail=true")
-            .then((r) => r.json())
-            .catch(() => []),
+        const responses = await Promise.all([
+          apiFetch("/api/studios"),
+          apiFetch("/api/bookings"),
+          apiFetch("/api/bookings?ownerEmail=true"),
         ]);
+        const [studiosRes, myBookingsRes, ownerBookingsRes] = await Promise.all(
+          responses.map(async (response) => {
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+              throw new Error(
+                data?.message ??
+                  data?.msg ??
+                  `Request failed with status ${response.status}`,
+              );
+            }
+            return data;
+          }),
+        );
 
         const allStudios = Array.isArray(studiosRes)
           ? studiosRes
@@ -76,6 +84,12 @@ export default function DashboardPage() {
             : 0,
           pendingBookingsCount: pendingBookings.length,
         });
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not load dashboard statistics.",
+        );
       } finally {
         setIsLoadingStats(false);
       }

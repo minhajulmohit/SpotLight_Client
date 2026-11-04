@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, CalendarCheck2, CheckCircle2, Search, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarCheck2,
+  CheckCircle2,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 const steps = [
   {
@@ -76,6 +82,7 @@ const HowItWorks = () => {
 
         <div className="mt-10 text-center">
           <Link
+            scroll={true}
             href="/studios"
             className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-amber-400 px-6 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-500"
           >

@@ -7,7 +7,6 @@ import Footer from "@/components/shared/Footer";
 import ThemeProvider from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/toast";
 import { Toaster as SonnerToaster } from "sonner";
-import ScrollToTop from "@/components/shared/ScrollToTop";
 
 const oswald = Oswald({
   variable: "--font-heading",
@@ -27,21 +26,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`,
-          }}
-        />
-      </head>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${oswald.variable} ${inter.variable} min-h-screen antialiased font-sans flex flex-col`}
+        className={`${oswald.variable} ${inter.variable} min-h-screen antialiased font-sans flex flex-col scroll-smooth`}
       >
         <ThemeProvider>
-          <Suspense fallback={null}>
-            <ScrollToTop />
-          </Suspense>
+          <Suspense fallback={null}></Suspense>
           <Suspense
             fallback={
               <div className="h-16 w-full border-b border-border bg-background" />

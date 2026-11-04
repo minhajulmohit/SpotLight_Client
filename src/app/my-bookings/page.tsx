@@ -341,10 +341,11 @@ const MyBookingsPage = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const errorMessage = data.message || "Could not cancel booking.";
+        const errorMessage =
+          data?.message ?? data?.msg ?? "Could not cancel booking.";
         throw new Error(errorMessage);
       }
 

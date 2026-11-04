@@ -75,6 +75,7 @@ const FeaturedStudios = async () => {
             </p>
           </div>
           <Link
+            scroll={true}
             href="/studios"
             className="group inline-flex items-center gap-2 text-sm font-semibold text-primary"
           >

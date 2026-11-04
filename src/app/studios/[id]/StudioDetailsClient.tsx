@@ -17,6 +17,7 @@ import {
 import BookingModal from "@/components/studios/BookingModal";
 import { Button } from "@/components/ui/button";
 
+
 export type StudioDetails = {
   _id?: string;
   id?: string;
