@@ -78,7 +78,6 @@ const MyListingsPage = () => {
           setError(message);
         }
       } finally {
-       
         if (isMounted) {
           setIsLoading(false);
         }
@@ -87,12 +86,10 @@ const MyListingsPage = () => {
 
     fetchStudios();
 
-  
     return () => {
       isMounted = false;
     };
   }, [reloadKey]);
-
 
   const myListings = useMemo(() => {
     if (!userEmail) return [];
@@ -174,7 +171,6 @@ const MyListingsPage = () => {
 
   return (
     <div className="bg-background pb-20">
-   
       <section className="border-b border-border bg-muted/40 py-12 text-foreground dark:bg-zinc-950 dark:text-white sm:py-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -335,7 +331,6 @@ const MyListingsPage = () => {
           </div>
         )}
 
-        
         <Dialog
           open={deleteTarget !== null}
           onOpenChange={(open) => {
@@ -347,7 +342,7 @@ const MyListingsPage = () => {
               <DialogTitle>Delete this studio?</DialogTitle>
               <DialogDescription>
                 &quot;{deleteTarget?.title}&quot; will be permanently removed
-                from your listings in MongoDB. This action cannot be undone.
+                from your listings. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
