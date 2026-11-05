@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ChevronDown,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   Menu,
   Plus,
@@ -47,6 +48,7 @@ const NavbarContent = () => {
 
   const sessionData = authClient.useSession();
   const user = sessionData.data?.user;
+  const isAuthPending = sessionData.isPending;
 
   useEffect(() => {
     if (isProfileOpen === false) {
@@ -173,7 +175,15 @@ const NavbarContent = () => {
         {/* Desktop: theme toggle + auth */}
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
-          {user ? (
+          {isAuthPending ? (
+            <div
+              className="flex items-center justify-center px-3 py-2"
+              role="status"
+              aria-label="Checking session"
+            >
+              <LoaderCircle className="size-5 animate-spin text-primary" />
+            </div>
+          ) : user ? (
             <div className="relative" ref={profileMenuRef}>
               <button
                 type="button"
@@ -287,7 +297,15 @@ const NavbarContent = () => {
               ))}
             </ul>
             <div className="flex flex-col gap-2 border-t border-border pt-4 dark:border-zinc-800">
-              {user ? (
+              {isAuthPending ? (
+                <div
+                  className="flex justify-center py-2"
+                  role="status"
+                  aria-label="Checking session"
+                >
+                  <LoaderCircle className="size-5 animate-spin text-primary" />
+                </div>
+              ) : user ? (
                 <>
                   <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3 dark:bg-zinc-800/60">
                     {user.image ? (
