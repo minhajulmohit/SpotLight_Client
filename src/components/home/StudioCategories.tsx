@@ -15,7 +15,7 @@ const categories = [
     description: "Daylight lofts, fashion sets, and product spaces.",
     icon: Camera,
     image:
-      "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80",
+      "https://plus.unsplash.com/premium_photo-1714618939758-84f1dd5e229c?q=80&w=973&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
   },
   {
     name: "Sound Stage",
@@ -23,7 +23,7 @@ const categories = [
     description: "Production-ready sets and cinematic sound stages.",
     icon: Clapperboard,
     image:
-      "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80",
+      "https://plus.unsplash.com/premium_photo-1722168614154-60badae538c1?q=80&w=580&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
   },
   {
     name: "Podcast Lounge",
@@ -47,7 +47,7 @@ const categories = [
     description: "Flexible spaces for teams, workshops, and shoots.",
     icon: Palette,
     image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1514195037031-83d60ed3b448?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
   },
   {
     name: "Film Stage",
